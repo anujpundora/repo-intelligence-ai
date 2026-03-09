@@ -15,5 +15,5 @@ def generate(prompt: str):
         ],
         model="llama-3.1-8b-instant"
     )
-
+    print("_____________Using Groq fallback________________")
     return chat_completion.choices[0].message.content

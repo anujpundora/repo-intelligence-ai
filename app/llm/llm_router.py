@@ -3,17 +3,16 @@ from app.llm import gemini_client, groq_client
 
 class LLMRouter:
 
-    def __init__(self, provider="gemini"):
-
-        self.provider = provider
-
     def generate(self, prompt):
 
-        if self.provider == "gemini":
+        try:
+            print("Using Gemini")
+
             return gemini_client.generate(prompt)
 
-        elif self.provider == "grok":
-            return groq_client.generate(prompt)
+        except Exception as e:
 
-        else:
-            raise ValueError("Unsupported LLM provider")
+            print("Gemini failed, switching to Groq")
+            print("Reason:", e)
+
+            return groq_client.generate(prompt)

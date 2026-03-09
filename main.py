@@ -1,9 +1,9 @@
-from app.tools.repo_cloner import clone_repo
+from app.llm.llm_router import LLMRouter
 
 if __name__ == "__main__":
 
-    repo_url = "https://github.com/pallets/flask"
+    llm = LLMRouter(provider="grok")
 
-    path = clone_repo(repo_url)
+    response = llm.generate("Explain SQL injection in simple terms")
 
-    print("Repo cloned to:", path)
+    print(response)

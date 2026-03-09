@@ -10,13 +10,21 @@ SUPPORTED_EXTENSIONS = {
     ".go",
     ".rs"
 }
+IGNORED_DIRS = {
+    "node_modules",
+    ".git",
+    "dist",
+    "build",
+    "venv",
+    "__pycache__"
+}
 
 def scan_repository(repo_path: str):
 
     code_files = []
 
     for root, dirs, files in os.walk(repo_path):
-
+        dirs[:] = [d for d in dirs if d not in IGNORED_DIRS]
         for file in files:
 
             _, ext = os.path.splitext(file)

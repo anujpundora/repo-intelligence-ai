@@ -1,4 +1,4 @@
-from app.llm import gemini_client, grok_client
+from app.llm import gemini_client, groq_client
 
 
 class LLMRouter:
@@ -13,7 +13,7 @@ class LLMRouter:
             return gemini_client.generate(prompt)
 
         elif self.provider == "grok":
-            return grok_client.generate(prompt)
+            return groq_client.generate(prompt)
 
         else:
             raise ValueError("Unsupported LLM provider")

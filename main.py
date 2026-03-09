@@ -1,6 +1,7 @@
 from app.tools.repo_cloner import clone_repo
 from app.tools.code_scanner import scan_repository
 from app.indexing.code_loader import load_and_chunk_files
+from app.indexing.vector_store import index_chunks, query_chunks
 
 
 def main():
@@ -11,15 +12,23 @@ def main():
 
     files = scan_repository(repo_path)
 
-    print("\nFiles found:", len(files))
-
     chunks = load_and_chunk_files(files)
 
-    print("\nTotal chunks created:", len(chunks))
+    print("Chunks created:", len(chunks))
 
-    print("\nExample chunk:\n")
+    # Index chunks into Chroma
+    index_chunks(chunks)
 
-    print(chunks[0]["content"][:300])
+    print("Chunks indexed in Chroma")
+
+    # Test retrieval
+    results = query_chunks("authentication token")
+
+    print("\nRetriever Results:\n")
+
+    for doc in results["documents"][0][:3]:
+        print(doc[:200])
+        print("----")
 
 
 if __name__ == "__main__":

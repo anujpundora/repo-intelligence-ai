@@ -1,5 +1,6 @@
 from app.tools.repo_cloner import clone_repo
 from app.tools.code_scanner import scan_repository
+from app.indexing.code_loader import load_and_chunk_files
 
 
 def main():
@@ -12,8 +13,13 @@ def main():
 
     print("\nFiles found:", len(files))
 
-    for f in files[:10]:
-        print(f)
+    chunks = load_and_chunk_files(files)
+
+    print("\nTotal chunks created:", len(chunks))
+
+    print("\nExample chunk:\n")
+
+    print(chunks[0]["content"][:300])
 
 
 if __name__ == "__main__":

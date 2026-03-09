@@ -1,16 +1,19 @@
-from app.llm.llm_router import LLMRouter
+from app.tools.repo_cloner import clone_repo
+from app.tools.code_scanner import scan_repository
 
 
 def main():
 
-    llm = LLMRouter()
+    repo_url = "https://github.com/pallets/flask"
 
-    prompt = "Explain SQL injection in simple terms"
+    repo_path = clone_repo(repo_url)
 
-    response = llm.generate(prompt)
+    files = scan_repository(repo_path)
 
-    print("\nLLM Response:\n")
-    print(response)
+    print("\nFiles found:", len(files))
+
+    for f in files[:10]:
+        print(f)
 
 
 if __name__ == "__main__":

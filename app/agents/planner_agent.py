@@ -29,11 +29,9 @@ Observations:
 {state.observations}
 
 Available tools:
-- clone_repo
-- scan_repository
 - query_chunks
 
-Decide the next tool to use and the input.
+Use the tool to retrieve relevant code.
 
 Return format:
 tool_name | input

@@ -5,7 +5,7 @@ from chromadb.utils import embedding_functions
 embedding_function = embedding_functions.DefaultEmbeddingFunction()
 
 # Initialize Chroma client
-client = chromadb.Client()
+client = chromadb.PersistentClient(path="./chroma_db")
 
 # Create / get collection
 collection = client.get_or_create_collection(

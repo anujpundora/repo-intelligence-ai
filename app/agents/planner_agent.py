@@ -31,7 +31,20 @@ Observations:
 
 Available tools:
 - query_chunks
+- security_agent
+- bug_agent
 - finish
+
+Tool descriptions:
+
+query_chunks:
+Retrieve relevant code chunks from the repository.
+
+security_agent:
+Analyze code for vulnerabilities.
+
+bug_agent:
+Analyze code for logical bugs.
 
 Respond ONLY in JSON format.
 

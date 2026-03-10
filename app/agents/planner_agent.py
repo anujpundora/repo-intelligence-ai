@@ -1,39 +1,64 @@
-from app.indexing.vector_store import query_chunks
 from app.llm.llm_router import LLMRouter
+from app.agents.tools import run_tool
+from app.agents.agent_state import AgentState
+
 
 llm = LLMRouter()
 
 
-def planner_agent(task: str):
+def planner_agent(task):
 
-    print("\nPlanner received task:", task)
+    state = AgentState(task)
 
-    # Retrieve relevant code
-    results = query_chunks(task)
+    max_steps = 3
 
-    context_chunks = results["documents"][0]
+    for step in range(max_steps):
 
-    context = "\n\n".join(context_chunks[:3])
+        print(f"\nStep {step+1}")
 
-    prompt = f"""
-        You are a software analysis planner.
+        prompt = f"""
+You are an autonomous software analysis agent.
 
-        Task:
-        {task}
+Task:
+{state.task}
 
-        Relevant code context:
-        {context}
+Previous actions:
+{state.history}
 
-        Based on the task and code context, decide which analysis agent should handle it.
+Observations:
+{state.observations}
 
-        Available agents:
-        - Bug Agent
-        - Security Agent
-        - Performance Agent
+Available tools:
+- clone_repo
+- scan_repository
+- query_chunks
 
-        Return only the agent name.
-        """
+Decide the next tool to use and the input.
 
-    decision = llm.generate(prompt)
+Return format:
+tool_name | input
+"""
 
-    return decision
+        decision = llm.generate(prompt)
+
+        print("Decision:", decision)
+
+        try:
+
+            tool_name, tool_input = decision.split("|")
+
+            tool_name = tool_name.strip()
+            tool_input = tool_input.strip()
+
+            result = run_tool(tool_name, tool_input)
+
+            print("Observation:", str(result)[:200])
+
+            state.add_step(tool_name, result)
+
+        except Exception as e:
+
+            print("Error:", e)
+            break
+
+    return state

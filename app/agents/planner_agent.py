@@ -16,23 +16,23 @@ def planner_agent(task: str):
     context = "\n\n".join(context_chunks[:3])
 
     prompt = f"""
-You are a software analysis planner.
+        You are a software analysis planner.
 
-Task:
-{task}
+        Task:
+        {task}
 
-Relevant code context:
-{context}
+        Relevant code context:
+        {context}
 
-Based on the task and code context, decide which analysis agent should handle it.
+        Based on the task and code context, decide which analysis agent should handle it.
 
-Available agents:
-- Bug Agent
-- Security Agent
-- Performance Agent
+        Available agents:
+        - Bug Agent
+        - Security Agent
+        - Performance Agent
 
-Return only the agent name.
-"""
+        Return only the agent name.
+        """
 
     decision = llm.generate(prompt)
 

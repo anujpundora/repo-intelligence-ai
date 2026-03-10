@@ -1,3 +1,4 @@
+import json
 from app.llm.llm_router import LLMRouter
 from app.agents.tools import run_tool
 from app.agents.agent_state import AgentState
@@ -10,7 +11,7 @@ def planner_agent(task):
 
     state = AgentState(task)
 
-    max_steps = 3
+    max_steps = 5
 
     for step in range(max_steps):
 
@@ -30,33 +31,51 @@ Observations:
 
 Available tools:
 - query_chunks
+- finish
 
-Use the tool to retrieve relevant code.
+Respond ONLY in JSON format.
 
-Return format:
-tool_name | input
+Tool usage format:
+{{
+  "tool": "query_chunks",
+  "input": "authentication"
+}}
+
+Finish format:
+{{
+  "tool": "finish",
+  "output": "final result"
+}}
 """
 
-        decision = llm.generate(prompt)
+        response = llm.generate(prompt)
 
-        print("Decision:", decision)
+        print("LLM response:", response)
 
         try:
 
-            tool_name, tool_input = decision.split("|")
+            decision = json.loads(response)
 
-            tool_name = tool_name.strip()
-            tool_input = tool_input.strip()
+            tool = decision["tool"]
 
-            result = run_tool(tool_name, tool_input)
+            if tool == "finish":
+
+                print("\nAgent finished:")
+                print(decision["output"])
+
+                return decision["output"]
+
+            tool_input = decision["input"]
+
+            result = run_tool(tool, tool_input)
 
             print("Observation:", str(result)[:200])
 
-            state.add_step(tool_name, result)
+            state.add_step(tool, result)
 
         except Exception as e:
 
             print("Error:", e)
             break
 
-    return state
+    print("\nAgent stopped after max steps.")

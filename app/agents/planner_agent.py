@@ -29,7 +29,9 @@ def planner_agent(task):
         print(f"\nStep {step+1}")
 
         prompt = f"""
-You are an autonomous software analysis agent.
+You are an autonomous software repository analysis agent.
+
+Your job is to analyze a code repository and detect bugs or security vulnerabilities.
 
 Task:
 {state.task}
@@ -37,8 +39,11 @@ Task:
 Previous actions:
 {state.history}
 
-Observations:
-{state.observations}
+Observations from tools:
+{state.observations[-3:]}
+
+Current retrieved code chunks:
+{state.context["retrieved_chunks"][:2]}
 
 Available tools:
 - query_chunks
@@ -46,30 +51,58 @@ Available tools:
 - bug_agent
 - finish
 
-Tool descriptions:
+
+WORKFLOW RULES (VERY IMPORTANT):
+
+1. If no code has been retrieved yet, you MUST call query_chunks first.
+2. Never call security_agent or bug_agent if retrieved code chunks are empty.
+3. After retrieving code, use security_agent or bug_agent to analyze it.
+4. Do NOT call query_chunks repeatedly if relevant code has already been retrieved.
+5. Do NOT call the same tool repeatedly.
+6. Always choose the next logical step in the analysis process.
+7. Return ONLY ONE JSON object.
+
+
+TOOL DESCRIPTIONS:
 
 query_chunks:
-Retrieve relevant code chunks from the repository.
+Retrieve relevant code snippets from the repository based on a query.
 
 security_agent:
-Analyze code for vulnerabilities.
+Analyze retrieved code for security vulnerabilities.
 
 bug_agent:
-Analyze code for logical bugs.
+Analyze retrieved code for logical errors or bugs.
 
-Respond ONLY with raw JSON. Do not include markdown or backticks.
 
-Tool usage format:
+OUTPUT FORMAT (STRICT):
+
+Tool usage:
 {{
   "tool": "query_chunks",
-  "input": "authentication"
+  "input": "authentication login session"
 }}
 
-Finish format:
+Security analysis:
+{{
+  "tool": "security_agent"
+}}
+
+Bug analysis:
+{{
+  "tool": "bug_agent"
+}}
+
+Finish task:
 {{
   "tool": "finish",
-  "output": "final result"
+  "output": "summary of findings"
 }}
+
+IMPORTANT:
+- Return ONLY ONE JSON object.
+- Do NOT include explanations.
+- Do NOT return multiple tool calls.
 """
         
         response = llm.generate(prompt)
@@ -88,33 +121,46 @@ Finish format:
 
                 print("\nAgent finished:")
                 print(decision["output"])
-
                 return decision["output"]
 
-            # get arguments safely
+            if tool in ["security_agent", "bug_agent"] and not state.context["retrieved_chunks"]:
+                print("No code context available. Forcing retrieval.")
+                tool = "query_chunks"
+                args = ["authentication"]
+                
             tool_input = decision.get("input", "")
 
-            # inject shared context before execution
-            if tool in ["security_agent", "bug_agent"]:
+            # prevent infinite loops
+            if state.history and tool == state.history[-1]:
+                print("Preventing repeated tool usage")
+                break
 
-                args = [state.task, state.context["retrieved_chunks"]]
+            # prepare arguments
+            if tool == "query_chunks":
+                args = [tool_input]
+
+            elif tool in ["security_agent", "bug_agent"]:
+                args = [state.context["retrieved_chunks"]]
+
+            else:
+                args = []
 
             # execute tool
-            result = run_tool(tool, [tool_input])
+            result = run_tool(tool, args)
+
+            # handle empty retrieval
+            if tool == "query_chunks" and not result:
+                print("No relevant chunks found.")
+                continue
 
             # update shared memory
             if tool == "query_chunks":
-
-                documents = result.get("documents", [[]])[0]
-
-                state.context["retrieved_chunks"].extend(documents)
+                state.context["retrieved_chunks"].extend(result)
 
             if tool == "security_agent":
-
                 state.context["security_findings"].append(result)
 
             if tool == "bug_agent":
-
                 state.context["bug_findings"].append(result)
 
             print("Observation:", str(result)[:200])
@@ -125,5 +171,3 @@ Finish format:
 
             print("Error:", e)
             break
-
-    print("\nAgent stopped after max steps.")

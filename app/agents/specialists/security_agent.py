@@ -3,20 +3,17 @@ from app.llm.llm_router import LLMRouter
 llm = LLMRouter()
 
 
-def security_agent(task, code_chunks):
+def security_agent(code_chunks):
 
-    code_context = "\n\n".join(code_chunks[:5])
+    code_context = "\n\n---CODE CHUNK---\n\n".join(code_chunks[:3])
 
     prompt = f"""
 You are a security analysis agent.
 
-Task:
-{task}
+Analyze the following code for vulnerabilities.
 
 Code:
 {code_context}
-
-Find possible vulnerabilities.
 
 Return:
 - vulnerability

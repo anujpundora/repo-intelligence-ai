@@ -13,6 +13,5 @@ class LLMRouter:
         except Exception as e:
 
             print("Gemini failed, switching to Groq")
-            print("Reason:", e)
 
             return groq_client.generate(prompt)

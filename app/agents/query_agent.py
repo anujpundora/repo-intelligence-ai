@@ -15,11 +15,12 @@ Return a JSON list of queries.
 Example:
 ["authentication login flask", "session handling flask", "login_required decorator"]
 """
-
+    
     response = llm.generate(prompt)
 
     try:
         queries = eval(response)
+        print(f"Generating queries {queries} for task {task}")
     except:
         queries = [task]
 

@@ -30,6 +30,7 @@ def planner_agent(task):
 
     max_steps = 5
 
+    retrieved_preview = state.context["retrieved_chunks"][:3]
     for step in range(max_steps):
 
         print(f"\nStep {step+1}")
@@ -37,7 +38,9 @@ def planner_agent(task):
         prompt = f"""
 You are an autonomous software repository analysis agent.
 
-Your job is to analyze a code repository and detect bugs or security vulnerabilities.
+Your goal is to analyze the repository and detect:
+- security vulnerabilities
+- logical bugs
 
 Task:
 {state.task}
@@ -45,11 +48,12 @@ Task:
 Previous actions:
 {state.history}
 
-Observations from tools:
-{state.observations[-3:]}
+Recent observations:
+{state.observations[-2:]}
 
-Current retrieved code chunks:
-{state.context["retrieved_chunks"][:2]}
+Retrieved code preview:
+{retrieved_preview}
+
 
 Available tools:
 - query_chunks
@@ -58,81 +62,32 @@ Available tools:
 - finish
 
 
-TOOL DESCRIPTIONS:
+Workflow:
 
-query_chunks:
-Retrieve relevant code snippets from the repository based on a query.
+1. If no code has been retrieved → use query_chunks.
+2. After retrieving code → run security_agent.
+3. After security_agent → run bug_agent.
+4. After bug_agent → finish.
 
-security_agent:
-Analyze retrieved code for security vulnerabilities.
 
-bug_agent:
-Analyze retrieved code for logical errors or bugs.
+Rules:
 
-Workflow rules:
+- Never repeat the same tool twice.
+- Use query_chunks only if no code has been retrieved.
+- Security and bug agents automatically receive code context.
+- Return exactly ONE JSON object.
+- Do not include explanations.
 
-1. If no code chunks exist → use query_chunks.
-2. After retrieving code → analyze it with security_agent or bug_agent.
-3. After security_agent finishes → run bug_agent.
-4. After both analyses → use finish.
-5. Do NOT call the same tool twice in a row.
 
-STRICT JSON FORMAT
-
-You MUST return exactly one JSON object.
-
-Allowed outputs:
+Valid outputs:
 
 {{"tool": "query_chunks"}}
+
 {{"tool": "security_agent"}}
+
 {{"tool": "bug_agent"}}
+
 {{"tool": "finish"}}
-
-Do NOT include input.
-Do NOT include code.
-Do NOT include explanations.
-Return only the JSON object.
-
-1. If no code has been retrieved yet, you MUST call query_chunks first.
-2. Never call security_agent or bug_agent if retrieved code chunks are empty.
-3. After retrieving code, use security_agent or bug_agent to analyze it.
-4. Do NOT call query_chunks repeatedly if relevant code has already been retrieved.
-5. Do NOT call the same tool repeatedly.
-6. Always choose the next logical step in the analysis process.
-7. Return ONLY ONE JSON object.
-8. Never include code snippets inside JSON output.
-9. Specialist agents will receive code from the system context.
-
-
-OUTPUT FORMAT (STRICT):
-
-Tool usage:
-{{
-  "tool": "query_chunks",
-  "input": "authentication login session"
-}}
-
-Security analysis:
-{{
-  "tool": "security_agent"
-}}
-
-Bug analysis:
-{{
-  "tool": "bug_agent"
-}}
-
-Finish task:
-{{
-  "tool": "finish",
-  "output": "summary of findings"
-}}
-
-IMPORTANT:
-- Return ONLY ONE JSON object.
-- Do NOT include explanations.
-- Do NOT return multiple tool calls.
-
 """
         
         response = llm.generate(prompt)
@@ -176,8 +131,14 @@ IMPORTANT:
             # prevent infinite loops
             if state.history and tool == state.history[-1]:
                 print("Preventing repeated tool usage")
-                break
+                if tool == "security_agent":
+                    tool = "bug_agent"
 
+                elif tool == "bug_agent":
+                    tool = "finish"
+
+                else:
+                    break
             # prepare arguments
             if tool == "query_chunks" and state.context["retrieved_chunks"]:
                 print("Code already retrieved. Switching to analysis.")
@@ -202,10 +163,14 @@ IMPORTANT:
 
             # update shared memory
             if tool == "query_chunks":
-                state.context["retrieved_chunks"].extend(result)
+                state.context["retrieved_chunks"] = (
+                state.context["retrieved_chunks"] + result
+                )[:5]
 
             if tool == "security_agent":
-                state.context["security_findings"].append(result)
+                #Will later add a summarizer instead of 200 cliping
+                summary = result[:200]  # first 200 chars
+                state.context["security_findings"].append(summary)
 
             if tool == "bug_agent":
                 state.context["bug_findings"].append(result)

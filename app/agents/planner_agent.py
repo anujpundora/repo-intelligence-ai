@@ -6,6 +6,17 @@ from app.agents.agent_state import AgentState
 
 llm = LLMRouter()
 
+#Helper function to clean LLM responses that may include """ formatting
+def clean_llm_json(response: str):
+
+    response = response.strip()
+
+    if response.startswith("```"):
+        response = response.split("```")[1]
+
+    response = response.replace("json", "").strip()
+
+    return response
 
 def planner_agent(task):
 
@@ -46,7 +57,7 @@ Analyze code for vulnerabilities.
 bug_agent:
 Analyze code for logical bugs.
 
-Respond ONLY in JSON format.
+Respond ONLY with raw JSON. Do not include markdown or backticks.
 
 Tool usage format:
 {{
@@ -62,6 +73,7 @@ Finish format:
 """
         
         response = llm.generate(prompt)
+        response = clean_llm_json(response)
 
         print("LLM response:", response)
 

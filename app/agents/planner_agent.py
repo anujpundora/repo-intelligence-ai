@@ -92,7 +92,7 @@ Finish format:
                 return decision["output"]
 
             # get arguments safely
-            args = decision.get("args", [])
+            tool_input = decision.get("input", "")
 
             # inject shared context before execution
             if tool in ["security_agent", "bug_agent"]:
@@ -100,7 +100,7 @@ Finish format:
                 args = [state.task, state.context["retrieved_chunks"]]
 
             # execute tool
-            result = run_tool(tool, args)
+            result = run_tool(tool, [tool_input])
 
             # update shared memory
             if tool == "query_chunks":

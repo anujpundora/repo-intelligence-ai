@@ -60,7 +60,7 @@ Finish format:
   "output": "final result"
 }}
 """
-
+        
         response = llm.generate(prompt)
 
         print("LLM response:", response)
@@ -71,6 +71,7 @@ Finish format:
 
             tool = decision["tool"]
 
+            # finish action
             if tool == "finish":
 
                 print("\nAgent finished:")
@@ -78,9 +79,31 @@ Finish format:
 
                 return decision["output"]
 
-            tool_input = decision["input"]
+            # get arguments safely
+            args = decision.get("args", [])
 
-            result = run_tool(tool, tool_input)
+            # inject shared context before execution
+            if tool in ["security_agent", "bug_agent"]:
+
+                args = [state.task, state.context["retrieved_chunks"]]
+
+            # execute tool
+            result = run_tool(tool, args)
+
+            # update shared memory
+            if tool == "query_chunks":
+
+                documents = result.get("documents", [[]])[0]
+
+                state.context["retrieved_chunks"].extend(documents)
+
+            if tool == "security_agent":
+
+                state.context["security_findings"].append(result)
+
+            if tool == "bug_agent":
+
+                state.context["bug_findings"].append(result)
 
             print("Observation:", str(result)[:200])
 

@@ -7,3 +7,4 @@ venv/
 __pycache__/
 repos/
 __pycache__/
+chroma_db/

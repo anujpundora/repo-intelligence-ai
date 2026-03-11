@@ -1,6 +1,6 @@
 import chromadb
 from chromadb.utils import embedding_functions
-
+from app.agents.query_agent import generate_queries
 # Use default embedding model from Chroma
 embedding_function = embedding_functions.DefaultEmbeddingFunction()
 
@@ -36,14 +36,21 @@ def index_chunks(chunks):
 
 def query_chunks(query, n_results=5):
 
-    results = collection.query(
-        query_texts=[query],
-        n_results=n_results
-    )
+    queries = [
+        query,
+        query + " login register session",
+        "flask authentication login register session user"
+    ]
 
-    documents = results.get("documents", [])
+    all_docs = []
 
-    if not documents or len(documents) == 0:
-        return []
+    for q in queries:
+        results = collection.query(
+            query_texts=[q],
+            n_results=n_results
+        )
 
-    return documents[0]
+        docs = results.get("documents", [[]])[0]
+        all_docs.extend(docs)
+
+    return list(set(all_docs))

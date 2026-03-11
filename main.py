@@ -6,7 +6,9 @@ from app.indexing.vector_store import index_chunks
 from app.agents.planner_agent import planner_agent
 
 def main():
+
     repo_path = "./repos/flask"
+
     files = scan_repository(repo_path)
 
     chunks = load_and_chunk_files(files)
@@ -17,8 +19,13 @@ def main():
 
     print("Chunks indexed")
 
-    planner_agent("Analyze authentication logic in the repository")
-    task = "Analyze authentication logic in the repository"
+    task = """
+    Perform an automated code review of the repository.
+    Identify:
+    - security vulnerabilities
+    - logical bugs
+    - performance issues
+    """
 
     planner_agent(task)
 

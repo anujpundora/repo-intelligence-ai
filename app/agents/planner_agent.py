@@ -1,3 +1,4 @@
+import re
 import json
 from app.llm.llm_router import LLMRouter
 from app.agents.tools import run_tool
@@ -5,7 +6,12 @@ from app.agents.agent_state import AgentState
 
 
 llm = LLMRouter()
-
+#Helper function to extract JSON object from LLM response
+def extract_json(text):
+                match = re.search(r"\{.*?\}", text, re.DOTALL)
+                if not match:
+                    raise ValueError("No JSON found in LLM response")
+                return json.loads(match.group())
 #Helper function to clean LLM responses that may include """ formatting
 def clean_llm_json(response: str):
 
@@ -52,17 +58,6 @@ Available tools:
 - finish
 
 
-WORKFLOW RULES (VERY IMPORTANT):
-
-1. If no code has been retrieved yet, you MUST call query_chunks first.
-2. Never call security_agent or bug_agent if retrieved code chunks are empty.
-3. After retrieving code, use security_agent or bug_agent to analyze it.
-4. Do NOT call query_chunks repeatedly if relevant code has already been retrieved.
-5. Do NOT call the same tool repeatedly.
-6. Always choose the next logical step in the analysis process.
-7. Return ONLY ONE JSON object.
-
-
 TOOL DESCRIPTIONS:
 
 query_chunks:
@@ -73,6 +68,40 @@ Analyze retrieved code for security vulnerabilities.
 
 bug_agent:
 Analyze retrieved code for logical errors or bugs.
+
+Workflow rules:
+
+1. If no code chunks exist → use query_chunks.
+2. After retrieving code → analyze it with security_agent or bug_agent.
+3. After security_agent finishes → run bug_agent.
+4. After both analyses → use finish.
+5. Do NOT call the same tool twice in a row.
+
+STRICT JSON FORMAT
+
+You MUST return exactly one JSON object.
+
+Allowed outputs:
+
+{{"tool": "query_chunks"}}
+{{"tool": "security_agent"}}
+{{"tool": "bug_agent"}}
+{{"tool": "finish"}}
+
+Do NOT include input.
+Do NOT include code.
+Do NOT include explanations.
+Return only the JSON object.
+
+1. If no code has been retrieved yet, you MUST call query_chunks first.
+2. Never call security_agent or bug_agent if retrieved code chunks are empty.
+3. After retrieving code, use security_agent or bug_agent to analyze it.
+4. Do NOT call query_chunks repeatedly if relevant code has already been retrieved.
+5. Do NOT call the same tool repeatedly.
+6. Always choose the next logical step in the analysis process.
+7. Return ONLY ONE JSON object.
+8. Never include code snippets inside JSON output.
+9. Specialist agents will receive code from the system context.
 
 
 OUTPUT FORMAT (STRICT):
@@ -103,18 +132,20 @@ IMPORTANT:
 - Return ONLY ONE JSON object.
 - Do NOT include explanations.
 - Do NOT return multiple tool calls.
+
 """
         
         response = llm.generate(prompt)
         response = clean_llm_json(response)
 
         print("LLM response:", response)
-
+        tool = None
+        tool_input = ""
         try:
 
-            decision = json.loads(response)
+            decision = extract_json(response)
 
-            tool = decision["tool"]
+            
 
             # finish action
             if tool == "finish":
@@ -128,7 +159,19 @@ IMPORTANT:
                 tool = "query_chunks"
                 args = ["authentication"]
                 
-            tool_input = decision.get("input", "")
+            tool = decision.get("tool")
+
+            if tool == "query_chunks":
+                args = [state.task]
+
+            elif tool in ["security_agent", "bug_agent"]:
+                args = [state.context["retrieved_chunks"]]
+
+            elif tool == "finish":
+                return "Analysis completed"
+
+            else:
+                raise ValueError("Unknown tool")
 
             # prevent infinite loops
             if state.history and tool == state.history[-1]:
@@ -136,10 +179,14 @@ IMPORTANT:
                 break
 
             # prepare arguments
+            if tool == "query_chunks" and state.context["retrieved_chunks"]:
+                print("Code already retrieved. Switching to analysis.")
+                tool = "security_agent"
             if tool == "query_chunks":
                 args = [tool_input]
 
             elif tool in ["security_agent", "bug_agent"]:
+                # ignore whatever the LLM sends
                 args = [state.context["retrieved_chunks"]]
 
             else:

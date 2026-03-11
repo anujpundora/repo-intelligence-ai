@@ -1,160 +1,243 @@
 # Repo Intelligence AI
 
-**Repo Intelligence AI** is an agentic AI system designed to understand entire codebases, detect issues, and suggest improvements automatically.
+**Repo Intelligence AI** is an agentic AI system designed to analyze entire software repositories, detect potential issues, and assist developers with automated code insights.
 
-Instead of analyzing individual files in isolation, the system aims to build a **holistic understanding of repositories**, enabling AI-driven code review, bug detection, and fix suggestions.
+Instead of analyzing code file-by-file manually, this system ingests a repository, builds a semantic index of the codebase, and uses a **multi-agent architecture** to retrieve, analyze, and reason about code.
 
-The long-term vision is to create an AI assistant capable of helping developers maintain and improve large codebases efficiently.
-
----
-
-# Key Idea
-
-Modern codebases are large and complex. Developers often spend significant time:
-
-* understanding unfamiliar repositories
-* locating bugs
-* detecting performance bottlenecks
-* identifying security vulnerabilities
-
-This project aims to build an **AI system that can perform these tasks automatically**.
-
-The system will:
-
-1. ingest a repository
-2. understand the structure of the codebase
-3. analyze code using multiple AI agents
-4. detect potential issues
-5. suggest fixes and improvements
+The goal is to create an **AI-powered code intelligence system** capable of assisting with bug detection, security analysis, and code understanding at the repository level.
 
 ---
 
 # Project Architecture
 
-The system is designed around a modular AI pipeline.
+The system is built as a modular AI pipeline:
 
 ```
 Repository
-    │
-    ▼
-Repo Ingestion
-    │
-    ▼
-Code Scanner
-    │
-    ▼
-Code Understanding Layer
-(AST + Embeddings)
-    │
-    ▼
-Planner Agent
-    │
- ┌───────────────┬───────────────┬───────────────┐
- ▼               ▼               ▼
-Bug Agent     Security Agent   Performance Agent
-    │
-    ▼
-Fix Suggestion Agent
-    │
-    ▼
-Developer Report / GitHub Comment
-```
-
----
-
-# Multi-LLM Architecture
-
-The system supports multiple LLM providers through a routing layer.
-
-```
-Prompt
    │
    ▼
-LLM Router
+Ingestion Pipeline
    │
- ┌───────────┬───────────┐
- ▼           ▼
-Gemini      Groq (LLaMA)
+   ▼
+Code Chunking
+   │
+   ▼
+Vector Index (Chroma)
+   │
+   ▼
+Planner Agent (Controller)
+   │
+   ▼
+Specialist Agents
+   │
+ ┌──────────────┬──────────────┐
+ ▼              ▼
+Security Agent  Bug Agent
+   │
+   ▼
+Final Analysis Report
 ```
 
-### Why multiple models?
-
-* improves reliability
-* reduces downtime
-* avoids rate limit failures
-* enables cost optimization
-
-If one provider fails or hits limits, the system automatically switches to another.
+The **Planner Agent** acts as the orchestrator, dynamically choosing tools and delegating tasks to specialized agents.
 
 ---
 
-# Current Features
+# Key Features
 
-✔ Multi-LLM routing system
-✔ Gemini integration
-✔ Groq (LLaMA 3.1) integration
-✔ Automatic fallback between providers
-✔ Modular project architecture
+## Multi-LLM Integration
 
-The system is currently focused on building the **core infrastructure for repository intelligence**.
+The system integrates multiple large language models through a routing layer.
 
----
-
-# Planned Features
-
-The next components will expand the system into a full AI analysis pipeline.
-
-### Repository Processing
-
-* repository cloning
-* code scanning
-* file filtering
-* code chunking
-
-### Code Understanding
-
-* AST parsing
-* dependency mapping
-* code graph generation
-
-### AI Agents
-
-* bug detection agent
-* security analysis agent
-* performance analysis agent
-* code quality agent
-
-### Fix Generation
-
-* suggested code fixes
-* refactoring suggestions
-* automated patch generation
-
-### GitHub Integration
-
-* pull request comments
-* automated code review
-* issue generation
-
----
-
-# Tech Stack
-
-**Core**
-
-* Python
-
-**LLM Providers**
+Supported providers:
 
 * Gemini
-* Groq (LLaMA 3.1)
+* Groq (LLaMA)
 
-**Planned Technologies**
+The router automatically selects the available provider and falls back if one fails.
 
-* LangGraph (agent orchestration)
-* FastAPI
-* Tree-sitter (AST parsing)
-* Qdrant (vector database)
+This architecture provides:
+
+* reliability
+* provider redundancy
+* flexible model usage
+
+---
+
+## Retrieval Augmented Generation (RAG)
+
+The project implements a **repository-level RAG pipeline**.
+
+Steps:
+
+1. Code files are scanned and loaded
+2. Files are chunked into manageable segments
+3. Chunks are embedded into vector representations
+4. Stored in a vector database
+5. Retrieved based on semantic similarity
+
+The vector store enables the agent system to retrieve **relevant code context** before performing analysis.
+
+Vector storage is implemented using **Chroma**.
+
+---
+
+## Multi-Agent Architecture
+
+The system uses a hierarchical agent design.
+
+### Planner Agent (Controller)
+
+Responsibilities:
+
+* receives the user task
+* retrieves relevant code using the vector store
+* decides which specialist agent should analyze the code
+* maintains shared context memory
+* orchestrates the analysis workflow
+
+The planner follows a reasoning loop:
+
+```
+Think → Act → Observe → Iterate
+```
+
+---
+
+### Security Agent
+
+Analyzes retrieved code chunks for potential security vulnerabilities.
+
+Examples of checks:
+
+* unsafe authentication logic
+* insecure token handling
+* potential injection vulnerabilities
+* insecure data handling
+
+Outputs:
+
+* vulnerability description
+* explanation
+* severity level
+
+---
+
+### Bug Agent
+
+Detects logical errors and possible code bugs.
+
+Examples:
+
+* incorrect logic flow
+* missing edge case handling
+* invalid assumptions in code
+* potential runtime issues
+
+Outputs:
+
+* bug description
+* reasoning
+* affected code sections
+
+---
+
+# Shared Context Memory
+
+Agents collaborate using a **shared context state**.
+
+The planner maintains structured memory:
+
+```
+context = {
+  retrieved_chunks
+  security_findings
+  bug_findings
+}
+```
+
+This allows agents to build upon previous results and improves multi-agent reasoning.
+
+---
+
+# Tool-Based Agent System
+
+Agents interact with the environment through tools.
+
+Example tools:
+
+* `query_chunks` – retrieves relevant code from the vector database
+* `security_agent` – analyzes security vulnerabilities
+* `bug_agent` – analyzes logical bugs
+
+The planner dynamically selects tools during execution.
+
+---
+
+# Agent Loop
+
+The Planner Agent executes tasks through an iterative loop:
+
+```
+1. Understand the task
+2. Decide which tool to use
+3. Execute tool
+4. Observe result
+5. Update shared context
+6. Continue until finished
+```
+
+This design enables **autonomous reasoning and task orchestration**.
+
+---
+
+# Ingestion Pipeline
+
+The ingestion layer prepares repository data for analysis.
+
+Components:
+
+* Repository Cloner
+* Code Scanner
+* File Loader
+* Code Chunker
+
+Supported languages include:
+
+* Python
+* JavaScript
+* TypeScript
+* C/C++
+* Go
+* Rust
+* Java
+
+Large repositories are filtered to ignore unnecessary directories like:
+
+```
+node_modules
+.git
+dist
+build
+__pycache__
+```
+
+---
+
+# Vector Database
+
+The project uses **Chroma** as the vector database.
+
+Chroma stores embeddings of code chunks and enables semantic retrieval.
+
+This allows the system to search for code concepts such as:
+
+```
+authentication logic
+database queries
+token generation
+```
+
+instead of simple keyword matching.
 
 ---
 
@@ -165,15 +248,28 @@ repo-intelligence-ai
 │
 ├── app
 │   ├── agents
-│   ├── analysis
-│   ├── api
+│   │   ├── planner_agent.py
+│   │   ├── tools.py
+│   │   ├── agent_state.py
+│   │   └── specialists
+│   │       ├── security_agent.py
+│   │       └── bug_agent.py
+│   │
 │   ├── indexing
-│   ├── llm
-│   │   ├── gemini_client.py
-│   │   ├── groq_client.py
-│   │   └── llm_router.py
-│   └── tools
+│   │   ├── code_loader.py
+│   │   └── vector_store.py
+│   │
+│   ├── tools
+│   │   ├── repo_cloner.py
+│   │   └── code_scanner.py
+│   │
+│   └── llm
+│       ├── gemini_client.py
+│       ├── groq_client.py
+│       └── llm_router.py
 │
+├── chroma_db
+├── repos
 ├── main.py
 └── README.md
 ```
@@ -188,14 +284,14 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Add API keys to a `.env` file:
+Set API keys in `.env`:
 
 ```
 GEMINI_API_KEY=your_key
 GROQ_API_KEY=your_key
 ```
 
-Run the project:
+Run the agent:
 
 ```
 python main.py
@@ -203,14 +299,30 @@ python main.py
 
 ---
 
-# Project Status
+# Current Status
 
-This project is currently **under active development**.
+The system currently supports:
 
-The initial phase focuses on building the core infrastructure required for repository-level AI analysis.
+* repository ingestion
+* vector-based code retrieval
+* planner agent orchestration
+* multi-agent analysis
+* shared context memory
+
+---
+
+# Future Improvements
+
+Planned features:
+
+* Fix Suggestion Agent
+* AST-based code analysis
+* performance analysis agent
+* GitHub PR review integration
+* automated patch generation
 
 ---
 
 # Vision
 
-The long-term goal is to create an **AI-powered code intelligence system** that can act as an automated code reviewer and development assistant for large repositories.
+The long-term goal is to create an **AI-powered repository intelligence system** capable of understanding large codebases, detecting issues automatically, and assisting developers with intelligent code insights.

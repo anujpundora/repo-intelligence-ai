@@ -12,7 +12,7 @@ def load_file(file_path: str):
 def chunk_code(lines, chunk_size=CHUNK_SIZE):
 
     chunks = []
-
+#Went with sliding window approach to preserve context across chunks. Can be optimized later.
     for i in range(0, len(lines), chunk_size):
         chunk = "".join(lines[i:i + chunk_size])
         chunks.append(chunk)

@@ -19,7 +19,6 @@ def index_chunks(chunks):
     documents = []
     ids = []
     metadatas = []
-
     for i, chunk in enumerate(chunks):
 
         documents.append(chunk["content"])
@@ -33,7 +32,7 @@ def index_chunks(chunks):
         metadatas=metadatas,
         ids=ids
     )
-
+    print("Indexing", len(documents), "chunks into Chroma")
 
 def query_chunks(query, n_results=5):
 
@@ -42,4 +41,9 @@ def query_chunks(query, n_results=5):
         n_results=n_results
     )
 
-    return results
+    documents = results.get("documents", [])
+
+    if not documents or len(documents) == 0:
+        return []
+
+    return documents[0]

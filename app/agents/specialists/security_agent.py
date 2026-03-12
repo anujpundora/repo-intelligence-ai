@@ -91,37 +91,54 @@ Do NOT return multiple tool calls.
         print("\n------ RAW LLM RESPONSE ------")
         print(response)
         print("------ END RESPONSE ------\n")
+
         if not response:
             return "LLM returned empty response"
+
         decision = parse_llm_json(response)
 
         if not decision:
             return "Agent failed to parse response"
 
-        tool = decision["tool"]
+        tool = decision.get("tool")
 
+
+        # Fallback detection if model output wasn't perfect
         if "check_syntax" in response:
             tool = "check_syntax"
 
         elif "detect_infinite_loops" in response:
             tool = "detect_infinite_loops"
 
-        else:
+        elif "finish" in response:
             tool = "finish"
+
+
+        # HANDLE FINISH FIRST
+        if tool == "finish":
 
             if not observations:
                 return "Code is safe!"
 
             if all(
-                "No" in obs or "not detected" in obs.lower()
+                "no" in obs.lower() or "not detected" in obs.lower()
                 for obs in observations
             ):
                 return "Code is safe!"
+
             return "\n".join(observations)
 
+
+        # TOOL VALIDATION
+        if tool not in TOOLS:
+            return f"Unknown tool: {tool}"
+
+
+        # EXECUTE TOOL
         result = TOOLS[tool](code_context)
 
         observations.append(result)
         history.append(tool)
 
-    return observations[-1] if observations else "No vulnerabilities found"
+
+        return observations[-1] if observations else "No vulnerabilities found"

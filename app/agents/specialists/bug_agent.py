@@ -93,8 +93,8 @@ STRICTILY Return ONLY One JSON object in the format:
         decision = parse_llm_json(response) or {}
         tool = decision.get("tool")
 
-        # fallback if parsing failed
-        if not decision:
+        # fallback if JSON parsing failed
+        if not tool:
             if "check_syntax" in response:
                 tool = "check_syntax"
             elif "detect_infinite_loops" in response:
@@ -103,17 +103,16 @@ STRICTILY Return ONLY One JSON object in the format:
                 tool = "finish"
             else:
                 return observations[-1] if observations else "No issues detected"
-            
-        else:
-            tool = decision["tool"]
-        result = TOOLS[tool](code_context)
 
+
+        # HANDLE FINISH FIRST
         if tool == "finish":
+
             if not observations:
-                    return "Code is safe!"
+                return "Code is safe!"
 
             if all(
-                "No" in obs or "not detected" in obs.lower()
+                "no" in obs.lower() or "not detected" in obs.lower()
                 for obs in observations
             ):
                 return "Code is safe!"
@@ -121,13 +120,18 @@ STRICTILY Return ONLY One JSON object in the format:
             return "\n".join(observations)
 
 
+        # VALIDATE TOOL
         if tool not in TOOLS:
             return f"Unknown tool: {tool}"
 
-        result = TOOLS[tool](code_context)
 
-        observations.append(result)
-        history.append(tool)
+        # LOOP GUARD (before execution)
+        if history and tool == history[-1]:
+            return observations[-1] if observations else "No issues detected"
+
+
+        # EXECUTE TOOL
+        result = TOOLS[tool](code_context)
 
         observations.append(result)
         history.append(tool)

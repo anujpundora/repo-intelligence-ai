@@ -105,7 +105,10 @@ Valid outputs:
                 print("\nAgent finished:")
                 print(decision["output"])
                 return decision["output"]
-
+            # prevent repeated retrieval
+            if tool == "query_chunks" and state.history and state.history[-1] == "query_chunks":
+                print("Code already retrieved. Switching to analysis.")
+                tool = "security_agent"
             if tool in ["security_agent", "bug_agent"] and not state.context["retrieved_chunks"]:
                 print("No code context available. Forcing retrieval.")
                 tool = "query_chunks"

@@ -1,7 +1,15 @@
+import json
 from app.llm.llm_router import LLMRouter
-from app.agents.tools import run_tool
+from app.analysis.bug_patterns import check_syntax
+from app.analysis.bug_patterns import detect_infinite_loops
 
 llm = LLMRouter()
+
+
+TOOLS = {
+    "check_syntax": check_syntax,
+    "detect_infinite_loops": detect_infinite_loops
+}
 
 
 def bug_agent(code_chunks, max_steps=3):
@@ -9,12 +17,18 @@ def bug_agent(code_chunks, max_steps=3):
     history = []
     observations = []
 
+    code_context = "\n\n".join(code_chunks[:3])
+
     for step in range(max_steps):
 
-        code_preview = "\n\n".join(code_chunks[:3])
-
         prompt = f"""
-You are a Specialized bug detection agent.
+You are a bug detection agent.
+
+Goal:
+Find logical bugs in the provided code.
+
+Code:
+{code_context}
 
 Previous actions:
 {history}
@@ -22,42 +36,29 @@ Previous actions:
 Observations:
 {observations}
 
-Code:
-{code_preview}
-
-Tools:
-- query_chunks
-- analyze_bug
+Available tools:
+- check_syntax
+- detect_infinite_loops
 - finish
 
 Return JSON:
-{{"tool": "query_chunks"}}
-{{"tool": "analyze_bug"}}
-{{"tool": "finish"}}
+
+{{"tool":"check_syntax"}}
+{{"tool":"detect_infinite_loops"}}
+{{"tool":"finish"}}
 """
 
         response = llm.generate(prompt)
 
-        if "query_chunks" in response:
+        decision = json.loads(response)
+        tool = decision["tool"]
 
-            result = run_tool("query_chunks", ["logic bug code"])
+        if tool == "finish":
+            return observations[-1] if observations else "No bugs found"
 
-            code_chunks.extend(result)
+        result = TOOLS[tool](code_context)
 
-            observations.append("Retrieved additional code")
+        observations.append(result)
+        history.append(tool)
 
-            history.append("query_chunks")
-
-        elif "analyze_bug" in response:
-
-            result = llm.generate(f"Find bugs in this code:\n{code_preview}")
-
-            observations.append(result)
-
-            history.append("analyze_bug")
-
-        elif "finish" in response:
-
-            return observations[-1]
-
-    return observations[-1] if observations else "No bugs detected."
+    return observations[-1] if observations else "No bugs found"

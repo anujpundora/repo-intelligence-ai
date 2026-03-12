@@ -61,14 +61,12 @@ Available tools:
 - bug_agent
 - finish
 
+Workflow rules:
 
-Workflow:
-
-1. If no code has been retrieved → use query_chunks.
-2. After retrieving code → run security_agent.
-3. After security_agent → run bug_agent.
-4. After bug_agent → finish.
-
+1. If no code retrieved → use query_chunks
+2. After retrieving code → you MUST run security_agent or bug_agent
+3. Only finish AFTER at least one analysis tool has been executed
+4. Never call query_chunks twice in a row
 
 Rules:
 
@@ -77,7 +75,6 @@ Rules:
 - Security and bug agents automatically receive code context.
 - Return exactly ONE JSON object.
 - Do not include explanations.
-
 
 Valid outputs:
 
@@ -175,6 +172,10 @@ Valid outputs:
             if tool == "bug_agent":
                 state.context["bug_findings"].append(result)
 
+            #prevents direct finish without analysis
+            if tool == "finish" and "security_agent" not in state.history and "bug_agent" not in state.history:
+                print("Analysis not performed yet. Running security_agent.")
+                tool = "security_agent"
             print("Observation:", str(result)[:200])
 
             state.add_step(tool, result)

@@ -109,7 +109,17 @@ STRICTILY Return ONLY One JSON object in the format:
         result = TOOLS[tool](code_context)
 
         if tool == "finish":
-            return observations[-1] if observations else "No issues detected"
+            if not observations:
+                    return "Code is safe!"
+
+            if all(
+                "No" in obs or "not detected" in obs.lower()
+                for obs in observations
+            ):
+                return "Code is safe!"
+
+            return "\n".join(observations)
+
 
         if tool not in TOOLS:
             return f"Unknown tool: {tool}"

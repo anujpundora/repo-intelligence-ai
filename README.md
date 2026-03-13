@@ -232,32 +232,7 @@ AWS (Fundamentals)
 Vercel
 
 Repository Structure
-repo-intelligence-ai
-│
-├── app
-│   ├── agents
-│   │   ├── planner_agent.py
-│   │   ├── specialists
-│   │   │   ├── security_agent.py
-│   │   │   ├── bug_agent.py
-│   │   │   └── reflection_agent.py
-│   │
-│   ├── llm
-│   │   ├── gemini_client.py
-│   │   ├── groq_client.py
-│   │   └── llm_router.py
-│   │
-│   ├── ingestion
-│   │   ├── loader.py
-│   │   └── chunker.py
-│   │
-│   ├── tools
-│   │   ├── query_chunks.py
-│   │   └── analysis
-│   │       ├── security_tools.py
-│   │       └── bug_tools.py
-│
-└── main.py
+![Alt Text](./ReadmeContent/Workflow.png)
 How to Run
 
 Install dependencies

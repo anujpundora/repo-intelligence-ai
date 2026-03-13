@@ -120,9 +120,11 @@ Valid outputs:
             if tool == "query_chunks":
                 args = [state.task]
 
+            
             elif tool in ["security_agent", "bug_agent"]:
                 args = [state.context["retrieved_chunks"]]
 
+         
             elif tool == "finish":
                 return "Analysis completed"
 
@@ -137,7 +139,8 @@ Valid outputs:
                 tool = "security_agent"
             if tool == "query_chunks":
                 args = [tool_input]
-
+           
+                
             elif tool in ["security_agent", "bug_agent"]:
                 # ignore whatever the LLM sends
                 args = [state.context["retrieved_chunks"]]
@@ -158,7 +161,12 @@ Valid outputs:
                 state.context["retrieved_chunks"] = (
                 state.context["retrieved_chunks"] + result
                 )[:5]
-
+            if tool == "reflection_agent":
+                result = reflection_agent(
+                    state.context["security_findings"],
+                    state.context["bug_findings"],
+                    state.context["retrieved_chunks"]
+                )
             if tool == "security_agent":
                 #Will later add a summarizer instead of 200 cliping
                 summary = result[:200]  # first 200 chars

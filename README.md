@@ -1,328 +1,311 @@
-# Repo Intelligence AI
+Autonomous Multi-Agent Repository Intelligence System
 
-**Repo Intelligence AI** is an agentic AI system designed to analyze entire software repositories, detect potential issues, and assist developers with automated code insights.
+An Agentic AI system that analyzes software repositories to detect bugs, security vulnerabilities, and code issues using multi-agent reasoning, Retrieval-Augmented Generation (RAG), vector search, and tool-driven analysis.
 
-Instead of analyzing code file-by-file manually, this system ingests a repository, builds a semantic index of the codebase, and uses a **multi-agent architecture** to retrieve, analyze, and reason about code.
+The system uses a Planner Agent to orchestrate specialized agents that inspect repository code and generate verified analysis results.
 
-The goal is to create an **AI-powered code intelligence system** capable of assisting with bug detection, security analysis, and code understanding at the repository level.
+Overview
 
----
+This project implements an autonomous AI code analysis pipeline capable of:
 
-# Project Architecture
+Understanding repository code using semantic search
 
-The system is built as a modular AI pipeline:
+Running iterative security and bug analysis agents
 
-```
+Executing tool-driven code checks
+
+Verifying results through a Reflection Agent
+
+Producing a consolidated analysis report
+
+The system demonstrates a modular Agentic AI architecture combining LLM reasoning with deterministic tools.
+
+Architecture
 Repository
-   │
-   ▼
-Ingestion Pipeline
-   │
-   ▼
-Code Chunking
-   │
-   ▼
-Vector Index (Chroma)
-   │
-   ▼
-Planner Agent (Controller)
-   │
-   ▼
-Specialist Agents
-   │
- ┌──────────────┬──────────────┐
- ▼              ▼
-Security Agent  Bug Agent
-   │
-   ▼
+     ↓
+Code Ingestion
+     ↓
+Chunking + Embedding
+     ↓
+Chroma Vector Database
+     ↓
+Planner Agent
+     ↓
+Security Agent
+     ↓
+Bug Agent
+     ↓
+Reflection Agent
+     ↓
 Final Analysis Report
-```
+Core Features
+Multi-Agent Architecture
 
-The **Planner Agent** acts as the orchestrator, dynamically choosing tools and delegating tasks to specialized agents.
+The system uses a Planner Agent to orchestrate specialized agents responsible for analyzing repository code.
 
----
+Agents collaborate using a shared context memory to pass observations and findings.
 
-# Key Features
+Retrieval-Augmented Generation (RAG)
 
-## Multi-LLM Integration
+The system retrieves relevant code snippets from a repository before performing analysis.
 
-The system integrates multiple large language models through a routing layer.
+Pipeline:
 
-Supported providers:
+Repository → Code Chunking → Embeddings → Vector DB → Semantic Search
 
-* Gemini
-* Groq (LLaMA)
+This enables agents to analyze only the relevant parts of large repositories.
 
-The router automatically selects the available provider and falls back if one fails.
+Vector Database Integration
 
-This architecture provides:
+Code embeddings are stored in ChromaDB enabling:
 
-* reliability
-* provider redundancy
-* flexible model usage
+Semantic code search
 
----
+Efficient retrieval across large repositories
 
-## Retrieval Augmented Generation (RAG)
+Context-aware agent reasoning
 
-The project implements a **repository-level RAG pipeline**.
+AST-Based Code Analysis
 
-Steps:
+The system integrates Abstract Syntax Tree (AST) parsing to analyze program structure and improve code reasoning beyond plain text.
 
-1. Code files are scanned and loaded
-2. Files are chunked into manageable segments
-3. Chunks are embedded into vector representations
-4. Stored in a vector database
-5. Retrieved based on semantic similarity
+AST analysis allows:
 
-The vector store enables the agent system to retrieve **relevant code context** before performing analysis.
+Syntax validation
 
-Vector storage is implemented using **Chroma**.
+Structural code understanding
 
----
+Detection of logical issues
 
-## Multi-Agent Architecture
+Tool-Driven Agent Reasoning
 
-The system uses a hierarchical agent design.
-
-### Planner Agent (Controller)
-
-Responsibilities:
-
-* receives the user task
-* retrieves relevant code using the vector store
-* decides which specialist agent should analyze the code
-* maintains shared context memory
-* orchestrates the analysis workflow
-
-The planner follows a reasoning loop:
-
-```
-Think → Act → Observe → Iterate
-```
-
----
-
-### Security Agent
-
-Analyzes retrieved code chunks for potential security vulnerabilities.
-
-Examples of checks:
-
-* unsafe authentication logic
-* insecure token handling
-* potential injection vulnerabilities
-* insecure data handling
-
-Outputs:
-
-* vulnerability description
-* explanation
-* severity level
-
----
-
-### Bug Agent
-
-Detects logical errors and possible code bugs.
-
-Examples:
-
-* incorrect logic flow
-* missing edge case handling
-* invalid assumptions in code
-* potential runtime issues
-
-Outputs:
-
-* bug description
-* reasoning
-* affected code sections
-
----
-
-# Shared Context Memory
-
-Agents collaborate using a **shared context state**.
-
-The planner maintains structured memory:
-
-```
-context = {
-  retrieved_chunks
-  security_findings
-  bug_findings
-}
-```
-
-This allows agents to build upon previous results and improves multi-agent reasoning.
-
----
-
-# Tool-Based Agent System
-
-Agents interact with the environment through tools.
+Specialist agents execute deterministic tools for analysis instead of relying solely on LLM reasoning.
 
 Example tools:
 
-* `query_chunks` – retrieves relevant code from the vector database
-* `security_agent` – analyzes security vulnerabilities
-* `bug_agent` – analyzes logical bugs
+Security Analysis
 
-The planner dynamically selects tools during execution.
+SQL injection detection
 
----
+Hardcoded secret detection
 
-# Agent Loop
+Command injection detection
 
-The Planner Agent executes tasks through an iterative loop:
+Bug Detection
 
-```
-1. Understand the task
-2. Decide which tool to use
-3. Execute tool
-4. Observe result
-5. Update shared context
-6. Continue until finished
-```
+Syntax validation
 
-This design enables **autonomous reasoning and task orchestration**.
+Infinite loop detection
 
----
+Static code analysis
 
-# Ingestion Pipeline
+Agents iterate using:
 
-The ingestion layer prepares repository data for analysis.
+Think → Select Tool → Execute → Observe → Repeat
+Multi-LLM Routing
 
-Components:
+The system integrates multiple LLM providers with automatic fallback.
 
-* Repository Cloner
-* Code Scanner
-* File Loader
-* Code Chunker
+Current routing:
 
-Supported languages include:
+Primary LLM → Gemini
+Fallback LLM → Groq (LLaMA models)
 
-* Python
-* JavaScript
-* TypeScript
-* C/C++
-* Go
-* Rust
-* Java
+Benefits:
 
-Large repositories are filtered to ignore unnecessary directories like:
+Increased reliability
 
-```
-node_modules
-.git
-dist
-build
-__pycache__
-```
+Cost-efficient inference
 
----
+Reduced downtime
 
-# Vector Database
+Reflection Agent
 
-The project uses **Chroma** as the vector database.
+The Reflection Agent validates results generated by specialist agents.
 
-Chroma stores embeddings of code chunks and enables semantic retrieval.
+Responsibilities:
 
-This allows the system to search for code concepts such as:
+Verify detected vulnerabilities
 
-```
-authentication logic
-database queries
-token generation
-```
+Remove false positives
 
-instead of simple keyword matching.
+Combine bug and security findings
 
----
+Generate a consolidated report
 
-# Project Structure
+This significantly reduces LLM hallucinations.
 
-```
+Agent Workflow
+
+Typical agent execution:
+
+Step 1 → query_chunks
+Retrieve relevant code from repository
+
+Step 2 → security_agent
+Analyze code for vulnerabilities
+
+Step 3 → bug_agent
+Detect logical errors and syntax issues
+
+Step 4 → reflection_agent
+Validate findings and combine results
+
+Step 5 → finish
+Return final report
+Example Output
+Security Findings:
+No vulnerabilities detected.
+
+Bug Findings:
+Syntax error detected in authentication module.
+
+Reflection Agent Summary:
+Verified Issue:
+- Unexpected indentation causing syntax error
+
+Severity: Medium
+Tech Stack
+
+Programming Languages
+
+Python
+
+JavaScript
+
+Java
+
+AI & LLM Technologies
+
+Agentic AI Systems
+
+Multi-Agent Architecture
+
+Retrieval-Augmented Generation (RAG)
+
+Gemini API
+
+Groq API
+
+LLM Prompt Engineering
+
+AI Agent Orchestration
+
+Planner Agent
+
+Security Agent
+
+Bug Agent
+
+Reflection Agent
+
+Tool-Driven Agents
+
+Backend
+
+FastAPI
+
+REST APIs
+
+Asynchronous Processing
+
+Databases
+
+PostgreSQL
+
+MySQL
+
+ChromaDB
+
+FAISS
+
+Tools & DevOps
+
+Git
+
+Docker
+
+Postman
+
+AWS (Fundamentals)
+
+Vercel
+
+Repository Structure
 repo-intelligence-ai
 │
 ├── app
 │   ├── agents
 │   │   ├── planner_agent.py
-│   │   ├── tools.py
-│   │   ├── agent_state.py
-│   │   └── specialists
-│   │       ├── security_agent.py
-│   │       └── bug_agent.py
+│   │   ├── specialists
+│   │   │   ├── security_agent.py
+│   │   │   ├── bug_agent.py
+│   │   │   └── reflection_agent.py
 │   │
-│   ├── indexing
-│   │   ├── code_loader.py
-│   │   └── vector_store.py
+│   ├── llm
+│   │   ├── gemini_client.py
+│   │   ├── groq_client.py
+│   │   └── llm_router.py
+│   │
+│   ├── ingestion
+│   │   ├── loader.py
+│   │   └── chunker.py
 │   │
 │   ├── tools
-│   │   ├── repo_cloner.py
-│   │   └── code_scanner.py
-│   │
-│   └── llm
-│       ├── gemini_client.py
-│       ├── groq_client.py
-│       └── llm_router.py
+│   │   ├── query_chunks.py
+│   │   └── analysis
+│   │       ├── security_tools.py
+│   │       └── bug_tools.py
 │
-├── chroma_db
-├── repos
-├── main.py
-└── README.md
-```
+└── main.py
+How to Run
 
----
+Install dependencies
 
-# Running the Project
-
-Install dependencies:
-
-```
 pip install -r requirements.txt
-```
 
-Set API keys in `.env`:
+Run the system
 
-```
-GEMINI_API_KEY=your_key
-GROQ_API_KEY=your_key
-```
-
-Run the agent:
-
-```
 python main.py
-```
 
----
+The system will:
 
-# Current Status
+Ingest repository code
 
-The system currently supports:
+Create embeddings
 
-* repository ingestion
-* vector-based code retrieval
-* planner agent orchestration
-* multi-agent analysis
-* shared context memory
+Store vectors in ChromaDB
 
----
+Execute multi-agent analysis
 
-# Future Improvements
+Generate final report
+
+Future Improvements
 
 Planned features:
 
-* Fix Suggestion Agent
-* AST-based code analysis
-* performance analysis agent
-* GitHub PR review integration
-* automated patch generation
+Fix Agent for automatic code repair
 
----
+AST-aware code chunking
 
-# Vision
+Advanced static analysis tools
 
-The long-term goal is to create an **AI-powered repository intelligence system** capable of understanding large codebases, detecting issues automatically, and assisting developers with intelligent code insights.
+GitHub Pull Request integration
+
+Repository-level reasoning
+
+Multi-language code support
+
+Project Goals
+
+This project demonstrates how Agentic AI systems can combine:
+
+LLM reasoning
+
+deterministic tools
+
+semantic retrieval
+
+multi-agent collaboration
+
+to build autonomous software analysis systems.

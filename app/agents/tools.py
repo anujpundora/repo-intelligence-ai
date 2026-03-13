@@ -1,3 +1,4 @@
+from app.agents.specialists.reflection_agent import reflection_agent
 from app.indexing.vector_store import query_chunks
 from app.agents.specialists.security_agent import security_agent
 from app.agents.specialists.bug_agent import bug_agent
@@ -6,9 +7,9 @@ from app.agents.specialists.bug_agent import bug_agent
 TOOLS = {
     "query_chunks": query_chunks,
     "security_agent": security_agent,
-    "bug_agent": bug_agent
+    "bug_agent": bug_agent,
+    "reflection_agent": reflection_agent
 }
-
 
 def run_tool(tool_name, args):
 

@@ -3,7 +3,7 @@ import json
 from app.llm.llm_router import LLMRouter
 from app.agents.tools import run_tool
 from app.agents.agent_state import AgentState
-
+from app.agents.specialists.reflection_agent import reflection_agent
 
 llm = LLMRouter()
 #Helper function to extract JSON object from LLM response
@@ -54,19 +54,20 @@ Recent observations:
 Retrieved code preview:
 {retrieved_preview}
 
-
 Available tools:
 - query_chunks
 - security_agent
 - bug_agent
+- reflection_agent
 - finish
 
-Workflow rules:
+Workflow:
 
-1. If no code retrieved → use query_chunks
-2. After retrieving code → you MUST run security_agent or bug_agent
-3. Only finish AFTER at least one analysis tool has been executed
-4. Never call query_chunks twice in a row
+1. If no code retrieved → query_chunks
+2. After retrieving code → security_agent
+3. After security_agent → bug_agent
+4. After bug_agent → reflection_agent
+5. After reflection_agent → finish
 
 Rules:
 
@@ -129,16 +130,7 @@ Valid outputs:
                 raise ValueError("Unknown tool")
 
             # prevent infinite loops
-            if state.history and tool == state.history[-1]:
-                print("Preventing repeated tool usage")
-                if tool == "security_agent":
-                    tool = "bug_agent"
-
-                elif tool == "bug_agent":
-                    tool = "finish"
-
-                else:
-                    break
+                #Currently removed for debugging,Will add later with better logic
             # prepare arguments
             if tool == "query_chunks" and state.context["retrieved_chunks"]:
                 print("Code already retrieved. Switching to analysis.")
@@ -175,6 +167,13 @@ Valid outputs:
             if tool == "bug_agent":
                 state.context["bug_findings"].append(result)
 
+            if tool == "reflection_agent":
+
+                result = reflection_agent(
+                    state.context["security_findings"],
+                    state.context["bug_findings"],
+                    state.context["retrieved_chunks"]
+                )
             #prevents direct finish without analysis
             if tool == "finish" and "security_agent" not in state.history and "bug_agent" not in state.history:
                 print("Analysis not performed yet. Running security_agent.")

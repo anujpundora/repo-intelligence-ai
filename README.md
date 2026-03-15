@@ -232,7 +232,9 @@ AWS (Fundamentals)
 Vercel
 
 Repository Structure
+
 ![Alt Text](./ReadmeContent/Workflow.png)
+
 How to Run
 
 Install dependencies

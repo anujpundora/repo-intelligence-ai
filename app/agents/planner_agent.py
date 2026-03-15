@@ -92,105 +92,67 @@ Valid outputs:
         response = clean_llm_json(response)
 
         print("LLM response:", response)
-        tool = None
-        tool_input = ""
-        try:
 
-            decision = extract_json(response)
+        decision = extract_json(response)
 
-            
+        tool = decision.get("tool")
+        tool_input = decision.get("input", "")
 
-            # finish action
-            if tool == "finish":
+        # ---------- finish ----------
+        if tool == "finish":
+            print("\nAgent finished")
+            return "Analysis completed"
 
-                print("\nAgent finished:")
-                print(decision["output"])
-                return decision["output"]
-            # prevent repeated retrieval
-            if tool == "query_chunks" and state.history and state.history[-1] == "query_chunks":
-                print("Code already retrieved. Switching to analysis.")
-                tool = "security_agent"
-            if tool in ["security_agent", "bug_agent"] and not state.context["retrieved_chunks"]:
-                print("No code context available. Forcing retrieval.")
-                tool = "query_chunks"
-                args = ["authentication"]
-                
-            tool = decision.get("tool")
+        # ---------- prevent repeated retrieval ----------
+        if tool == "query_chunks" and state.history and state.history[-1] == "query_chunks":
+            print("Code already retrieved. Switching to analysis.")
+            tool = "security_agent"
 
-            if tool == "query_chunks":
-                args = [state.task]
+        # ---------- ensure code context ----------
+        if tool in ["security_agent", "bug_agent"] and not state.context["retrieved_chunks"]:
+            print("No code context available. Forcing retrieval.")
+            tool = "query_chunks"
 
-            
-            elif tool in ["security_agent", "bug_agent"]:
-                args = [state.context["retrieved_chunks"]]
+        # ---------- prepare arguments ----------
+        if tool == "query_chunks":
+            args = [state.task]
 
-         
-            elif tool == "finish":
-                return "Analysis completed"
+        elif tool in ["security_agent", "bug_agent"]:
+            args = [state.context["retrieved_chunks"]]
 
-            else:
-                raise ValueError("Unknown tool")
+        elif tool == "reflection_agent":
+            args = [
+                state.context["security_findings"],
+                state.context["bug_findings"],
+                state.context["retrieved_chunks"]
+            ]
 
-            # prevent infinite loops
-                #Currently removed for debugging,Will add later with better logic
-            # prepare arguments
-            if tool == "query_chunks" and state.context["retrieved_chunks"]:
-                print("Code already retrieved. Switching to analysis.")
-                tool = "security_agent"
-            if tool == "query_chunks":
-                args = [tool_input]
-           
-                
-            elif tool in ["security_agent", "bug_agent"]:
-                # ignore whatever the LLM sends
-                args = [state.context["retrieved_chunks"]]
+        else:
+            raise ValueError(f"Unknown tool: {tool}")
 
-            else:
-                args = []
+        # ---------- execute ----------
+        if tool == "reflection_agent":
+            result = reflection_agent(*args)
 
-            # execute tool
+        else:
             result = run_tool(tool, args)
 
-            # handle empty retrieval
-            if tool == "query_chunks" and not result:
-                print("No relevant chunks found.")
-                continue
+        print("Observation:", str(result)[:200])
 
-            # update shared memory
-            if tool == "query_chunks":
-                state.context["retrieved_chunks"] = (
+        if tool == "reflection_agent" and not (
+            state.context["security_findings"] or state.context["bug_findings"]
+        ):
+            tool = "finish"
+        # ---------- update memory ----------
+        if tool == "query_chunks":
+            state.context["retrieved_chunks"] = (
                 state.context["retrieved_chunks"] + result
-                )[:5]
-            if tool == "reflection_agent":
-                result = reflection_agent(
-                    state.context["security_findings"],
-                    state.context["bug_findings"],
-                    state.context["retrieved_chunks"]
-                )
-            if tool == "security_agent":
-                #Will later add a summarizer instead of 200 cliping
-                summary = result[:200]  # first 200 chars
-                state.context["security_findings"].append(summary)
+            )[:5]
 
-            if tool == "bug_agent":
-                state.context["bug_findings"].append(result)
+        elif tool == "security_agent":
+            state.context["security_findings"].append(result[:200])
 
-            if tool == "reflection_agent":
+        elif tool == "bug_agent":
+            state.context["bug_findings"].append(result)
 
-                result = reflection_agent(
-                    state.context["security_findings"],
-                    state.context["bug_findings"],
-                    state.context["retrieved_chunks"]
-                )
-            #prevents direct finish without analysis
-            if tool == "finish" and "security_agent" not in state.history and "bug_agent" not in state.history:
-                print("Analysis not performed yet. Running security_agent.")
-                tool = "security_agent"
-            print("Observation:", str(result)[:200])
-
-            state.add_step(tool, result)
-
-        except Exception as e:
-
-            print("Error:", e)
-            break
+        state.history.append(tool)

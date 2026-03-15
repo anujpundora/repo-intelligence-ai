@@ -5,6 +5,12 @@ llm = LLMRouter()
 
 def reflection_agent(security_findings, bug_findings, code_chunks):
 
+    if not security_findings and not bug_findings:
+        return "Code is safe!"
+
+    if all("safe" in f.lower() for f in security_findings + bug_findings):
+        return "Code is safe!"
+    
     code_context = "\n\n".join(code_chunks[:2])
 
     security_report = "\n".join(security_findings)

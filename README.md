@@ -1,13 +1,13 @@
+![Python](https://img.shields.io/badge/Python-3.11-blue)
+![Multi-Agent](https://img.shields.io/badge/Architecture-Multi--Agent-purple)
+![RAG](https://img.shields.io/badge/RAG-ChromaDB-green)
+![LLM](https://img.shields.io/badge/LLM-Gemini%20%7C%20Groq-orange)
+![Status](https://img.shields.io/badge/Status-Active-success)
+
+
+
+
 🚀 Autonomous Multi-Agent Code Intelligence System
-
-
-
-
-
-
-
-
-
 
 An autonomous AI system that analyzes software repositories using multi-agent reasoning, RAG, AST parsing, and LLM orchestration to detect bugs, security issues, and suggest fixes.
 
@@ -28,6 +28,7 @@ Reflection-based validation
 Unlike basic AI apps, this system mimics modern AI engineering pipelines.
 
 🏗️ Architecture Diagram
+```text
 Repository Code
       ↓
 Code Ingestion
@@ -48,7 +49,9 @@ Reflection Agent
 Fix Agent (Patch Suggestions)
         ↓
 Final Analysis Report
+```
 ⚙️ Features
+
 🔹 Multi-Agent Architecture
 
 Planner Agent (decision maker)
@@ -118,13 +121,16 @@ Fix suggestion
 Explanation
 
 🔄 Agent Workflow
+```text
 Step 1 → query_chunks (retrieve relevant code)
 Step 2 → security_agent (detect vulnerabilities)
 Step 3 → bug_agent (detect logical issues)
 Step 4 → reflection_agent (validate results)
 Step 5 → fix_agent (suggest fixes)
 Step 6 → finish (final output)
+```
 📁 Project Structure
+```text
 repo-intelligence-ai
 │
 ├── app
@@ -153,8 +159,9 @@ repo-intelligence-ai
 │   │   └── chunker.py
 │
 └── main.py
+```
 🛠️ Tech Stack
-
+```text
 Language:
 Python
 
@@ -169,10 +176,11 @@ ChromaDB
 
 Code Analysis:
 AST Parsing, Static Analysis
+```
 
 ▶️ Getting Started
 1️⃣ Clone Repository
-git clone <your-repo-url>
+git clone <https://github.com/anujpundora/repo-intelligence-ai>
 cd repo-intelligence-ai
 2️⃣ Install Dependencies
 pip install -r requirements.txt

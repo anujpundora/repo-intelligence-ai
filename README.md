@@ -95,14 +95,18 @@ Suggests minimal fixes (not full rewrite)
 
 Provides explanation + patch
 
-🔄 Agent Workflow
+## 🔄 Agent Workflow
+
+```text
 Step 1 → query_chunks (retrieve relevant code)
 Step 2 → security_agent (detect vulnerabilities)
 Step 3 → bug_agent (detect logical issues)
 Step 4 → reflection_agent (validate results)
 Step 5 → fix_agent (suggest fixes)
 Step 6 → finish (final output)
+```
 📁 Project Structure
+```text
 repo-intelligence-ai
 │
 ├── app
@@ -131,6 +135,7 @@ repo-intelligence-ai
 │   │   └── chunker.py
 │
 └── main.py
+```
 🛠️ Tech Stack
 
 Languages:

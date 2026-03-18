@@ -1,45 +1,57 @@
 🚀 Autonomous Multi-Agent Code Intelligence System
 
-An Agentic AI system that analyzes software repositories to detect bugs, security vulnerabilities, and code issues using multi-agent reasoning, Retrieval-Augmented Generation (RAG), AST-based analysis, and tool-driven workflows.
+
+
+
+
+
+
+
+
+
+An autonomous AI system that analyzes software repositories using multi-agent reasoning, RAG, AST parsing, and LLM orchestration to detect bugs, security issues, and suggest fixes.
 
 🧠 Overview
 
-This project demonstrates how modern AI systems combine LLMs, vector search, and static analysis to build an autonomous code review system.
+This project demonstrates a real-world Agentic AI system that combines:
 
-The system:
+Multi-Agent Systems
 
-Understands repository code using semantic search (RAG)
+Retrieval-Augmented Generation (RAG)
 
-Uses a Planner Agent to orchestrate analysis
+Static Code Analysis (AST)
 
-Runs specialized agents for bug & security detection
+Tool-driven reasoning
 
-Verifies results using a Reflection Agent
+Reflection-based validation
 
-Suggests fixes using a Fix Agent
+Unlike basic AI apps, this system mimics modern AI engineering pipelines.
 
-🏗️ Architecture
-Repository
-   ↓
+🏗️ Architecture Diagram
+Repository Code
+      ↓
 Code Ingestion
-   ↓
+      ↓
 Chunking + Embeddings
-   ↓
-Chroma Vector DB
-   ↓
+      ↓
+Chroma Vector Database
+      ↓
 Planner Agent
-   ↓
-Security Agent + Bug Agent
-   ↓
+     /      \
+Security Agent   Bug Agent
+     \      /
+   Analysis Tools
+(AST, Static Checks, Security Scans)
+        ↓
 Reflection Agent
-   ↓
-Fix Agent
-   ↓
-Final Report
+        ↓
+Fix Agent (Patch Suggestions)
+        ↓
+Final Analysis Report
 ⚙️ Features
 🔹 Multi-Agent Architecture
 
-Planner Agent (decision making)
+Planner Agent (decision maker)
 
 Security Agent (vulnerability detection)
 
@@ -51,9 +63,11 @@ Fix Agent (patch suggestions)
 
 🔹 Retrieval-Augmented Generation (RAG)
 
-Repository → chunking → embeddings → vector DB
+Semantic code retrieval using embeddings
 
-Semantic search for relevant code retrieval
+Efficient analysis of large repositories
+
+Powered by ChromaDB
 
 🔹 AST-Based Code Analysis
 
@@ -61,52 +75,56 @@ Syntax error detection
 
 Function & structure extraction
 
-Static analysis without LLM dependency
+Static analysis independent of LLM
 
 🔹 Tool-Driven Agents
 
-Agents use tools instead of only LLM reasoning:
+Agents use deterministic tools:
 
-Syntax checker (AST)
-
-Infinite loop detection
+AST parser (syntax validation)
 
 SQL injection detection
 
 Hardcoded secret detection
 
+Infinite loop detection
+
 🔹 Multi-LLM Routing
 
-Primary: Google Gemini
+Primary: Gemini API
 
 Fallback: Groq (LLaMA models)
 
-🔹 Reflection Layer
+Ensures reliability and cost efficiency.
+
+🔹 Reflection Agent
 
 Validates findings
 
 Removes false positives
 
-Combines results into final report
+Reduces hallucinations
 
-🔹 Fix Suggestions (Patch-Based)
+🔹 Fix Agent (Patch-Based)
 
 Suggests minimal fixes (not full rewrite)
 
-Provides explanation + patch
+Provides:
 
-## 🔄 Agent Workflow
+Issue
 
-```text
+Fix suggestion
+
+Explanation
+
+🔄 Agent Workflow
 Step 1 → query_chunks (retrieve relevant code)
 Step 2 → security_agent (detect vulnerabilities)
 Step 3 → bug_agent (detect logical issues)
 Step 4 → reflection_agent (validate results)
 Step 5 → fix_agent (suggest fixes)
 Step 6 → finish (final output)
-```
 📁 Project Structure
-```text
 repo-intelligence-ai
 │
 ├── app
@@ -135,34 +153,30 @@ repo-intelligence-ai
 │   │   └── chunker.py
 │
 └── main.py
-```
 🛠️ Tech Stack
 
-Languages:
+Language:
 Python
 
 AI & LLM:
 Gemini API, Groq (LLaMA), Prompt Engineering, RAG
 
-AI Architecture:
-Multi-Agent Systems, Agentic Workflow, Tool-based Agents
+Architecture:
+Multi-Agent Systems, Agentic Workflow, Tool-Based Agents
 
-Vector Database:
+Vector DB:
 ChromaDB
 
 Code Analysis:
 AST Parsing, Static Analysis
 
-Backend (Optional Extension):
-FastAPI
-
-▶️ How to Run
+▶️ Getting Started
 1️⃣ Clone Repository
 git clone <your-repo-url>
 cd repo-intelligence-ai
 2️⃣ Install Dependencies
 pip install -r requirements.txt
-3️⃣ Set Environment Variables
+3️⃣ Setup Environment Variables
 
 Create .env file:
 
@@ -170,18 +184,6 @@ GEMINI_API_KEY=your_key_here
 GROQ_API_KEY=your_key_here
 4️⃣ Run the Project
 python main.py
-5️⃣ What Happens Internally
-
-Repository is scanned
-
-Code is chunked & embedded
-
-Stored in ChromaDB
-
-Planner agent starts execution
-
-Agents analyze + verify + suggest fixes
-
 📊 Example Output
 Security Findings:
 No vulnerabilities detected.
@@ -199,54 +201,57 @@ Fix Suggestion:
 
 Empty retrieval results
 
-Repeated agent loops
+Infinite agent loops
 
 LLM malformed JSON responses
 
 Token limit issues
 
-False positives (handled by reflection agent)
+False positives (via reflection agent)
 
 🚀 Future Improvements
 
-GitHub PR integration (auto review)
+GitHub PR integration
 
-AST-based code patching
+AST-based automatic patching
 
-UI dashboard for results
+Web UI dashboard
 
 Multi-language support
 
 CI/CD integration
 
-🎯 Project Goals
+🎯 Why This Project Stands Out
 
-This project demonstrates how to build:
-
-Autonomous AI agents
-
-Tool-driven reasoning systems
-
-Hybrid LLM + static analysis pipelines
-
-Scalable AI architectures
-
-⭐ Why This Project Is Unique
-
-Unlike basic AI projects, this system combines:
+This system goes beyond basic AI apps by combining:
 
 Multi-agent orchestration
 
-RAG + vector search
+RAG + semantic search
 
-AST-based analysis
+AST-based static analysis
 
 Reflection-based validation
 
-Fix suggestion system
+Patch-based fix generation
 
 👉 Making it closer to real-world AI engineering systems
 
 📌 One-Line Description
 
-An autonomous multi-agent AI system that analyzes software repositories using RAG, AST parsing, and LLM reasoning to detect bugs, security issues, and suggest fixes.
+Autonomous multi-agent AI system for repository analysis using RAG, AST parsing, and LLM reasoning to detect and fix code issues.
+
+⭐ If You Like This Project
+
+Give it a ⭐ on GitHub!
+
+🔥 Next Upgrade (Optional)
+
+If you want to make this even more impressive:
+
+Add UI (Streamlit)
+
+Add GitHub integration (auto PR review)
+
+Add CI/CD scanning
+

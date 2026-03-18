@@ -179,23 +179,27 @@ AST Parsing, Static Analysis
 ```
 
 ▶️ Getting Started
+```text
 1️⃣ Clone Repository
+
 git clone <https://github.com/anujpundora/repo-intelligence-ai>
 cd repo-intelligence-ai
+
 2️⃣ Install Dependencies
 pip install -r requirements.txt
-3️⃣ Setup Environment Variables
 
+3️⃣ Setup Environment Variables
 Create .env file:
 
 GEMINI_API_KEY=your_key_here
 GROQ_API_KEY=your_key_here
+
 4️⃣ Run the Project
 python main.py
 📊 Example Output
 Security Findings:
 No vulnerabilities detected.
-
+```
 Bug Findings:
 Syntax error in authentication module.
 
@@ -203,6 +207,7 @@ Reflection:
 Verified issue → indentation error
 
 Fix Suggestion:
+```text
 - Fix indentation in login function
 - Ensure proper block structure
 ⚠️ Edge Cases Handled
@@ -216,7 +221,7 @@ LLM malformed JSON responses
 Token limit issues
 
 False positives (via reflection agent)
-
+```
 🚀 Future Improvements
 
 GitHub PR integration
@@ -230,7 +235,7 @@ Multi-language support
 CI/CD integration
 
 🎯 Why This Project Stands Out
-
+```text
 This system goes beyond basic AI apps by combining:
 
 Multi-agent orchestration
@@ -244,7 +249,7 @@ Reflection-based validation
 Patch-based fix generation
 
 👉 Making it closer to real-world AI engineering systems
-
+```
 📌 One-Line Description
 
 Autonomous multi-agent AI system for repository analysis using RAG, AST parsing, and LLM reasoning to detect and fix code issues.

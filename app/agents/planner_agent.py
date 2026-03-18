@@ -4,6 +4,7 @@ from app.llm.llm_router import LLMRouter
 from app.agents.tools import run_tool
 from app.agents.agent_state import AgentState
 from app.agents.specialists.reflection_agent import reflection_agent
+from app.agents.specialists.fix_agent import fix_agent
 
 llm = LLMRouter()
 #Helper function to extract JSON object from LLM response
@@ -67,7 +68,8 @@ Workflow:
 2. After retrieving code → security_agent
 3. After security_agent → bug_agent
 4. After bug_agent → reflection_agent
-5. After reflection_agent → finish
+5. If issues exist → fix_agent
+6. After fix_agent → finish
 
 Rules:
 
@@ -143,6 +145,13 @@ Valid outputs:
             state.context["security_findings"] or state.context["bug_findings"]
         ):
             tool = "finish"
+        elif tool == "fix_agent":
+
+            result = fix_agent(
+                state.context["security_findings"],
+                state.context["bug_findings"],
+                state.context["retrieved_chunks"]
+            )
         # ---------- update memory ----------
         if tool == "query_chunks":
             state.context["retrieved_chunks"] = (

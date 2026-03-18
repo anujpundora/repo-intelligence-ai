@@ -14,22 +14,23 @@ def fix_agent(security_findings, bug_findings, code_chunks):
     prompt = f"""
 You are a senior software engineer.
 
-The following issues were detected in the code:
-
-Issues:
+Issues detected:
 {issues}
 
 Code:
 {code_context}
 
 Your task:
-1. Fix the issues in the code.
-2. Provide the corrected code.
-3. Explain the fix briefly.
+Suggest minimal fixes for the issues.
 
-Return:
-- Fixed code
+Return in this format:
+
+- Issue
+- Fix suggestion (only the changed lines)
 - Explanation
+
+Do NOT rewrite full code.
+Only suggest patches.
 """
 
     return llm.generate(prompt)

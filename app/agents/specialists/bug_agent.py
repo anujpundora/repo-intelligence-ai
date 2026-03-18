@@ -3,7 +3,7 @@ import re
 from app.llm.llm_router import LLMRouter
 from app.analysis.bug_patterns import check_syntax
 from app.analysis.bug_patterns import detect_infinite_loops
-
+from app.tools.ast_parser import ast_analysis_tool
 llm = LLMRouter()
 
 
@@ -46,6 +46,7 @@ def bug_agent(code_chunks, max_steps=3):
     history = []
     observations = []
 
+    ast_result = ast_analysis_tool(code_chunks)
     code_context = "\n\n".join(code_chunks[:3])
 
     for step in range(max_steps):
@@ -55,6 +56,10 @@ You are a bug detection agent.
 
 Goal:
 Find logical bugs in the provided code.
+
+
+AST Analysis:
+{ast_result}
 
 Code:
 {code_context}

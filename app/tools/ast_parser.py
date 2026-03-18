@@ -36,3 +36,25 @@ def extract_imports(tree):
                 imports.append(f"{module}.{alias.name}")
 
     return imports
+
+def ast_analysis_tool(code_chunks):
+
+    results = []
+
+    for chunk in code_chunks[:3]:  # limit for performance
+
+        tree = parse_code(chunk)
+
+        if not tree:
+            results.append("Syntax error detected")
+            continue
+
+        functions = extract_functions(tree)
+        imports = extract_imports(tree)
+
+        results.append({
+            "functions": functions,
+            "imports": imports
+        })
+
+    return results

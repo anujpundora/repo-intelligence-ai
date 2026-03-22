@@ -11,7 +11,11 @@ TOOLS = {
     "check_syntax": check_syntax,
     "detect_infinite_loops": detect_infinite_loops
 }
-
+def is_safe(observations):
+    return all(
+        any(word in obs.lower() for word in ["no", "not detected", "safe"])
+        for obs in observations
+    )
 #Helper function
 
 def clean_llm_json(response: str):
@@ -79,10 +83,8 @@ Return ONLY valid JSON.
 Do not include explanations.
 Do not include markdown.
 
-STRICTILY Return ONLY One JSON object in the format:
-{{"tool":"check_syntax"}}
-{{"tool":"detect_infinite_loops"}}
-{{"tool":"finish"}}
+Select next tool from Available tools and Only return it in this format:
+{{"tool": "<tool_name>"}}
 """
 
         response = llm.generate(prompt)
@@ -116,12 +118,11 @@ STRICTILY Return ONLY One JSON object in the format:
             if not observations:
                 return "Code is safe!"
 
-            if all(
-                "no" in obs.lower() or "not detected" in obs.lower()
-                for obs in observations
-            ):
+            if tool == "finish":
+                if not observations or is_safe(observations):
+                    return "Code is safe!"
+                return "\n".join(observations)
                 return "Code is safe!"
-
             return "\n".join(observations)
 
 
@@ -131,8 +132,9 @@ STRICTILY Return ONLY One JSON object in the format:
 
 
         # LOOP GUARD (before execution)
-        if history and tool == history[-1]:
-            return observations[-1] if observations else "No issues detected"
+        if tool in history:
+            print("Skipping repeated tool")
+            continue
 
 
         # EXECUTE TOOL
@@ -141,6 +143,4 @@ STRICTILY Return ONLY One JSON object in the format:
         observations.append(result)
         history.append(tool)
 
-        if history and tool == history[-1]:
-            return observations[-1]
     return observations[-1] if observations else "No bugs found"

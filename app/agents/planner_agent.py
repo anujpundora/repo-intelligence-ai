@@ -44,7 +44,7 @@ def planner_agent(task):
 
     state = AgentState(task)
 
-    max_steps = 5
+    max_steps = 10
 
     retrieved_preview = state.context["retrieved_chunks"][:3]
     for step in range(max_steps):
@@ -102,9 +102,9 @@ CRITICAL OUTPUT RULES:
 
 If you violate this, the system will fail.
 
-ONLY return:
+Select next tool from Available tools and Only return it in this format:
 
-{"tool": "<tool_name>"}
+{{"tool": "<tool_name>"}}
 """
         
         response = llm.generate(prompt)

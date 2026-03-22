@@ -1,6 +1,6 @@
 import os
 
-CHUNK_SIZE = 200
+CHUNK_SIZE = 50
 
 
 def load_file(file_path: str):

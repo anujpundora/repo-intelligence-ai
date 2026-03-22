@@ -79,10 +79,8 @@ Do not include markdown.
 
 Return ONLY ONE JSON object.
 Do NOT return multiple tool calls.
-{{"tool":"detect_sql_injection"}}
-{{"tool":"detect_hardcoded_secrets"}}
-{{"tool":"detect_command_injection"}}
-{{"tool":"finish"}}
+Select next tool from Available tools and Only return it in this format:
+{{"tool": "<tool_name>"}}
 """
 
         response = llm.generate(prompt)
@@ -140,5 +138,7 @@ Do NOT return multiple tool calls.
         observations.append(result)
         history.append(tool)
 
+    if not observations:
+        return "Code is safe!"
 
-        return observations[-1] if observations else "No vulnerabilities found"
+    return "\n".join(observations)

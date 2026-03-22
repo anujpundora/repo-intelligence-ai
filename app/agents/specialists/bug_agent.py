@@ -74,10 +74,17 @@ Previous actions:
 Observations:
 {observations}
 
+Current step: {step+1}/{max_steps}
+
 Available tools:
 - check_syntax
 - detect_infinite_loops
 - finish
+
+Guidance:
+- Start with check_syntax
+- Then check loops
+- Then finish
 
 Return ONLY valid JSON.
 Do not include explanations.
@@ -138,7 +145,7 @@ Select next tool from Available tools and Only return it in this format:
 
 
         # EXECUTE TOOL
-        result = TOOLS[tool](code_context)
+        result = TOOLS[tool](code_chunks)
 
         observations.append(result)
         history.append(tool)

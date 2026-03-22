@@ -6,9 +6,13 @@ from app.analysis.security_patterns import (
     detect_hardcoded_secrets,
     detect_command_injection
 )
-
+#Helper funtion to Finish
+def is_safe(observations):
+    return all(
+        any(word in obs.lower() for word in ["no", "not detected", "safe"])
+        for obs in observations
+    )
 llm = LLMRouter()
-
 
 TOOLS = {
     "detect_sql_injection": detect_sql_injection,
@@ -143,7 +147,7 @@ Select next tool from Available tools and Only return it in this format:
         observations.append(result)
         history.append(tool)
 
-    if not observations:
+    if not observations or is_safe(observations):
         return "Code is safe!"
 
     return "\n".join(observations)

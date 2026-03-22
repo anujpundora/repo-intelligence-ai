@@ -1,5 +1,7 @@
 import re
 import json
+
+from typer.cli import state
 from app.llm.llm_router import LLMRouter
 from app.agents.tools import run_tool
 from app.agents.agent_state import AgentState
@@ -13,6 +15,19 @@ def extract_json(text):
                 if not match:
                     raise ValueError("No JSON found in LLM response")
                 return json.loads(match.group())
+
+#Helper function to extract first JSON object from text (for cases where LLM may return multiple JSON objects or text)
+def extract_first_json(text):
+    matches = re.findall(r'\{.*?\}', text)
+
+    for m in matches:
+        try:
+            return json.loads(m)
+        except:
+            continue
+
+    return None
+
 #Helper function to clean LLM responses that may include """ formatting
 def clean_llm_json(response: str):
 
@@ -55,6 +70,7 @@ Recent observations:
 Retrieved code preview:
 {retrieved_preview}
 
+
 Available tools:
 - query_chunks
 - security_agent
@@ -62,32 +78,33 @@ Available tools:
 - reflection_agent
 - finish
 
-Workflow:
+STRICT WORKFLOW:
 
-1. If no code retrieved → query_chunks
-2. After retrieving code → security_agent
-3. After security_agent → bug_agent
-4. After bug_agent → reflection_agent
-5. If issues exist → fix_agent
-6. After fix_agent → finish
+1. If no code retrieved → MUST use query_chunks
+2. After query_chunks → MUST use security_agent
+3. After security_agent → MUST use bug_agent
+4. After bug_agent → MUST use reflection_agent
+5. After reflection_agent → MUST use finish
 
-Rules:
+STATE:
+Retrieved code count: {len(state.context["retrieved_chunks"])}
+If this is greater than 0, DO NOT use query_chunks again.
 
-- Never repeat the same tool twice.
-- Use query_chunks only if no code has been retrieved.
-- Security and bug agents automatically receive code context.
-- Return exactly ONE JSON object.
-- Do not include explanations.
+CRITICAL OUTPUT RULES:
 
-Valid outputs:
+- You MUST return ONLY ONE JSON object
+- DO NOT explain anything
+- DO NOT return multiple JSON objects
+- DO NOT include text before or after JSON
+- DO NOT describe steps
+- DO NOT return a list
+- DO NOT simulate future steps
 
-{{"tool": "query_chunks"}}
+If you violate this, the system will fail.
 
-{{"tool": "security_agent"}}
+ONLY return:
 
-{{"tool": "bug_agent"}}
-
-{{"tool": "finish"}}
+{"tool": "<tool_name>"}
 """
         
         response = llm.generate(prompt)
@@ -95,21 +112,42 @@ Valid outputs:
 
         print("LLM response:", response)
 
-        decision = extract_json(response)
+        decision = extract_first_json(response)
 
         tool = decision.get("tool")
         tool_input = decision.get("input", "")
+        valid_tools = [
+            "query_chunks",
+            "security_agent",
+            "bug_agent",
+            "reflection_agent",
+            "finish"
+        ]
 
+        if tool not in valid_tools:
+            print("Invalid tool from LLM. Forcing fallback.")
+            tool = "security_agent"
         # ---------- finish ----------
         if tool == "finish":
             print("\nAgent finished")
             return "Analysis completed"
 
         # ---------- prevent repeated retrieval ----------
-        if tool == "query_chunks" and state.history and state.history[-1] == "query_chunks":
-            print("Code already retrieved. Switching to analysis.")
-            tool = "security_agent"
+        if tool == "query_chunks" and state.context["retrieved_chunks"]:
+                print("Already have code. Forcing security analysis.")
+                tool = "security_agent"
+       # ---------- enforce workflow ----------
+        if tool == "finish" and "reflection_agent" not in state.history:
+            print("Preventing early finish. Moving to next step.")
 
+            if "security_agent" not in state.history:
+                tool = "security_agent"
+
+            elif "bug_agent" not in state.history:
+                tool = "bug_agent"
+
+            else:
+                tool = "reflection_agent"
         # ---------- ensure code context ----------
         if tool in ["security_agent", "bug_agent"] and not state.context["retrieved_chunks"]:
             print("No code context available. Forcing retrieval.")

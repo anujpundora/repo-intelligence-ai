@@ -100,13 +100,14 @@ Select next tool from Available tools and Only return it in this format:
 
         tool = decision.get("tool")
 
+        if "detect_sql_injection" in response:
+            tool = "detect_sql_injection"
 
-        # Fallback detection if model output wasn't perfect
-        if "check_syntax" in response:
-            tool = "check_syntax"
+        elif "detect_hardcoded_secrets" in response:
+            tool = "detect_hardcoded_secrets"
 
-        elif "detect_infinite_loops" in response:
-            tool = "detect_infinite_loops"
+        elif "detect_command_injection" in response:
+            tool = "detect_command_injection"
 
         elif "finish" in response:
             tool = "finish"
@@ -127,13 +128,17 @@ Select next tool from Available tools and Only return it in this format:
             return "\n".join(observations)
 
 
+        #Avoiding Repeated Tool Usage
+        if tool in history:
+            print("Skipping repeated tool")
+            continue
         # TOOL VALIDATION
         if tool not in TOOLS:
             return f"Unknown tool: {tool}"
 
 
         # EXECUTE TOOL
-        result = TOOLS[tool](code_context)
+        result = TOOLS[tool](code_chunks)
 
         observations.append(result)
         history.append(tool)

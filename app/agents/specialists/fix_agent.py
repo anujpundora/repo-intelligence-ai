@@ -2,35 +2,61 @@ from app.llm.llm_router import LLMRouter
 
 llm = LLMRouter()
 
+
 def fix_agent(security_findings, bug_findings, code_chunks):
 
-    issues = "\n".join(security_findings + bug_findings)
+    issues_list = security_findings + bug_findings
 
-    if not issues or "safe" in issues.lower():
+    # ---------- early exit ----------
+    if not issues_list:
         return "No fixes required. Code is safe."
 
+    if all("safe" in i.lower() for i in issues_list):
+        return "No fixes required. Code is safe."
+
+    issues = "\n".join(issues_list)
     code_context = "\n\n".join(code_chunks[:2])
 
     prompt = f"""
 You are a senior software engineer.
 
-Issues detected:
+Your task:
+Generate minimal and precise fixes for the given issues.
+
+Issues:
 {issues}
 
 Code:
 {code_context}
 
-Your task:
-Suggest minimal fixes for the issues.
+Instructions:
+- DO NOT rewrite full code
+- ONLY show changed lines
+- Keep fixes minimal and precise
+- Prefer secure and standard practices
 
 Return in this format:
 
-- Issue
-- Fix suggestion (only the changed lines)
-- Explanation
+Issue:
+<short issue name>
 
-Do NOT rewrite full code.
-Only suggest patches.
+Fix:
+<what to change>
+
+Code Patch:
+- old line
++ new line
+
+Explanation:
+<why this fix works>
+
+If no real fix is needed, return:
+Code is safe
 """
 
-    return llm.generate(prompt)
+    response = llm.generate(prompt)
+
+    if not response:
+        return "No fixes generated."
+
+    return response.strip()

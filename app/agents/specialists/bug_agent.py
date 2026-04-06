@@ -6,7 +6,6 @@ from app.analysis.bug_patterns import detect_infinite_loops
 from app.tools.ast_parser import ast_analysis_tool
 llm = LLMRouter()
 
-
 TOOLS = {
     "check_syntax": check_syntax,
     "detect_infinite_loops": detect_infinite_loops
@@ -105,7 +104,30 @@ Select next tool from Available tools and Only return it in this format:
             return "LLM returned empty response"
 
         decision = parse_llm_json(response) or {}
-        tool = decision.get("tool")
+        tool = decision.get("tool") if decision else None
+
+        if not decision:
+            print("⚠️ Failed to parse JSON, using fallback")
+
+            if "query_chunks" in response:
+                tool = "query_chunks"
+            elif "security_agent" in response:
+                tool = "security_agent"
+            elif "bug_agent" in response:
+                tool = "bug_agent"
+            elif "reflection_agent" in response:
+                tool = "reflection_agent"
+            elif "fix_agent" in response:
+                tool = "fix_agent"
+            elif "finish" in response:
+                tool = "finish"
+            else:
+                print("❌ Could not determine tool")
+                return "Agent failed to parse response"
+        else:
+            tool = decision.get("tool")
+        
+        print("Parsed decision:", decision)
 
         # fallback if JSON parsing failed
         if not tool:
@@ -129,7 +151,7 @@ Select next tool from Available tools and Only return it in this format:
                 if not observations or is_safe(observations):
                     return "Code is safe!"
                 return "\n".join(observations)
-                return "Code is safe!"
+
             return "\n".join(observations)
 
 
@@ -145,7 +167,8 @@ Select next tool from Available tools and Only return it in this format:
 
 
         # EXECUTE TOOL
-        result = TOOLS[tool](code_chunks)
+        code_context = "\n\n".join(code_chunks[:3])
+        result = TOOLS[tool](code_context)
 
         observations.append(result)
         history.append(tool)

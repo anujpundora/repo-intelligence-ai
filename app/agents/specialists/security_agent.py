@@ -142,7 +142,8 @@ Select next tool from Available tools and Only return it in this format:
 
 
         # EXECUTE TOOL
-        result = TOOLS[tool](code_chunks)
+        code_context = "\n\n".join(code_chunks[:3])
+        result = TOOLS[tool](code_context)
 
         observations.append(result)
         history.append(tool)

@@ -44,7 +44,7 @@ def planner_agent(task):
 
     state = AgentState(task)
 
-    max_steps = 10
+    max_steps = 25
 
     retrieved_preview = state.context["retrieved_chunks"][:3]
     for step in range(max_steps):
@@ -76,15 +76,17 @@ Available tools:
 - security_agent
 - bug_agent
 - reflection_agent
+- fix_agent
 - finish
 
 STRICT WORKFLOW:
 
-1. If no code retrieved → MUST use query_chunks
-2. After query_chunks → MUST use security_agent
-3. After security_agent → MUST use bug_agent
-4. After bug_agent → MUST use reflection_agent
-5. After reflection_agent → MUST use finish
+1. If no code retrieved → query_chunks
+2. After retrieving code → security_agent
+3. After security_agent → bug_agent
+4. After bug_agent → reflection_agent
+5. If issues exist → fix_agent
+6. After fix_agent → finish
 
 STATE:
 Retrieved code count: {len(state.context["retrieved_chunks"])}
@@ -121,6 +123,7 @@ Select next tool from Available tools and Only return it in this format:
             "security_agent",
             "bug_agent",
             "reflection_agent",
+            "fix_agent",
             "finish"
         ]
 
@@ -128,26 +131,29 @@ Select next tool from Available tools and Only return it in this format:
             print("Invalid tool from LLM. Forcing fallback.")
             tool = "security_agent"
         # ---------- finish ----------
-        if tool == "finish":
-            print("\nAgent finished")
-            return "Analysis completed"
+        if tool == "finish" and (
+            state.context["security_findings"] or state.context["bug_findings"]
+        ) and "fix_agent" not in state.history:
+            
+            print("Forcing fix step before finish")
+            tool = "fix_agent"
 
         # ---------- prevent repeated retrieval ----------
         if tool == "query_chunks" and state.context["retrieved_chunks"]:
                 print("Already have code. Forcing security analysis.")
                 tool = "security_agent"
        # ---------- enforce workflow ----------
-        if tool == "finish" and "reflection_agent" not in state.history:
-            print("Preventing early finish. Moving to next step.")
+        if tool == "reflection_agent" and not (
+            state.context["security_findings"] or state.context["bug_findings"]
+        ):
+            print("No issues found. Skipping fix.")
+            tool = "finish"
 
-            if "security_agent" not in state.history:
-                tool = "security_agent"
-
-            elif "bug_agent" not in state.history:
-                tool = "bug_agent"
-
-            else:
-                tool = "reflection_agent"
+        elif tool == "fix_agent" and not (
+            state.context["security_findings"] or state.context["bug_findings"]
+        ):
+            print("No issues to fix. Skipping fix.")
+            tool = "finish"
         # ---------- ensure code context ----------
         if tool in ["security_agent", "bug_agent"] and not state.context["retrieved_chunks"]:
             print("No code context available. Forcing retrieval.")
@@ -166,17 +172,24 @@ Select next tool from Available tools and Only return it in this format:
                 state.context["bug_findings"],
                 state.context["retrieved_chunks"]
             ]
+        elif tool == "fix_agent":
+            result = fix_agent(
+                state.context["security_findings"],
+                state.context["bug_findings"],
+                state.context["retrieved_chunks"]
+            )
 
         else:
-            raise ValueError(f"Unknown tool: {tool}")
+                result = run_tool(tool, args)
+
 
         # ---------- execute ----------
         if tool == "reflection_agent":
             result = reflection_agent(*args)
 
-        else:
-            result = run_tool(tool, args)
-
+        elif tool == "fix_agent":
+            state.context["fixes"] = result
+     
         print("Observation:", str(result)[:200])
 
         if tool == "reflection_agent" and not (
@@ -203,3 +216,8 @@ Select next tool from Available tools and Only return it in this format:
             state.context["bug_findings"].append(result)
 
         state.history.append(tool)
+        print("\n🔍 Final Report:\n")
+        print(state.context.get("final_report", "No report"))
+
+        print("\n🛠️ Suggested Fixes:\n")
+        print(state.context.get("fixes", "No fixes"))
